@@ -20,6 +20,7 @@ classifiers = [
 
 dependencies = [
     "airo-drake",
+    "loguru",
 ]
 
 [project.urls]
