@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "airo-planner"
+version = "0.0.1"
+authors = [
+  { name = "Andreas Verleysen", email = "andreas.verleysen@ugent.be" },
+  { name = "Victor-Louis De Gusseme", email = "victorlouisdg@gmail.com" },
+]
+description = "Motion planning for single and dual robot arms."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "airo-drake",
+]
+
+[project.urls]
+Homepage = "https://github.com/airo-ugent/airo-planner"
+Issues = "https://github.com/airo-ugent/airo-planner/issues"
