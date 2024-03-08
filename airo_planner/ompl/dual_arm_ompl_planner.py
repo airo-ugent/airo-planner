@@ -8,11 +8,11 @@ from ompl import geometric as og
 
 from airo_planner import (
     DualArmPlanner,
-    InverseKinematicsType,
+    InverseKinematicsFunctionType,
     SingleArmOmplPlanner,
-    function_numpy_to_ompl,
-    numpy_to_ompl_state,
-    ompl_path_to_numpy,
+    function_to_ompl,
+    path_from_ompl,
+    state_to_ompl,
 )
 
 DualJointConfigurationCheckerType = Callable[[np.ndarray], bool]
@@ -22,8 +22,8 @@ class DualArmOmplPlanner(DualArmPlanner):
     def __init__(
         self,
         is_state_valid_fn: DualJointConfigurationCheckerType,
-        inverse_kinematics_left_fn: Optional[InverseKinematicsType] = None,
-        inverse_kinematics_right_fn: Optional[InverseKinematicsType] = None,
+        inverse_kinematics_left_fn: Optional[InverseKinematicsFunctionType] = None,
+        inverse_kinematics_right_fn: Optional[InverseKinematicsFunctionType] = None,
         joint_bounds_left: Optional[Tuple[JointConfigurationType, JointConfigurationType]] = None,
         joint_bounds_right: Optional[Tuple[JointConfigurationType, JointConfigurationType]] = None,
         max_planning_time: float = 5.0,
@@ -74,7 +74,7 @@ class DualArmOmplPlanner(DualArmPlanner):
                 bounds.setHigh(i, self.joint_bounds_right[1][i - 6])
         space.setBounds(bounds)
 
-        is_state_valid_ompl = function_numpy_to_ompl(self.is_state_valid_fn, self.degrees_of_freedom)
+        is_state_valid_ompl = function_to_ompl(self.is_state_valid_fn, self.degrees_of_freedom)
 
         simple_setup = og.SimpleSetup(space)
         simple_setup.setStateValidityChecker(ob.StateValidityCheckerFn(is_state_valid_ompl))
@@ -100,8 +100,8 @@ class DualArmOmplPlanner(DualArmPlanner):
         space = self._simple_setup.getStateSpace()
         start_configuration = np.concatenate([start_configuration_left, start_configuration_right])
         goal_configuration = np.concatenate([goal_configuration_left, goal_configuration_right])
-        start_state = numpy_to_ompl_state(start_configuration, space)
-        goal_state = numpy_to_ompl_state(goal_configuration, space)
+        start_state = state_to_ompl(start_configuration, space)
+        goal_state = state_to_ompl(goal_configuration, space)
         self._simple_setup.setStartAndGoalStates(start_state, goal_state)
 
         # Replace single arm planners for the left and right arm
@@ -167,7 +167,7 @@ class DualArmOmplPlanner(DualArmPlanner):
 
         self._path_length_dual = path.length()
 
-        path_numpy = ompl_path_to_numpy(path, self.degrees_of_freedom)
+        path_numpy = path_from_ompl(path, self.degrees_of_freedom)
         path_tuple = [(state[:6], state[6:]) for state in path_numpy]
         return path_tuple
 

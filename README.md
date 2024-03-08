@@ -2,8 +2,8 @@
 Python package for single and dual robot arm motion planning.
 
 **Key motivation:**
-  - 🔗 **Bridge** the gap between **OMPL**'s the powerful (but robot-agnostic) sampling-based planners and **Drake**'s collision checking for robots.
-  - 🦾 **Standardize** and add other features taylored to robotic arm motion planning such as joint limits can planning to TCP poses.
+  - 🔗 **Bridge** the gap between [**OMPL**](https://ompl.kavrakilab.org/)'s powerful (but robot-agnostic) sampling-based planners and [**Drake**](https://drake.mit.edu/)'s collision checking for robots.
+  - 🦾 **Standardize** and add other features taylored to robotic arm motion planning such as joint limits and planning to TCP poses.
 
 ## Overview 🧾
 
@@ -12,7 +12,7 @@ Python package for single and dual robot arm motion planning.
     - `SingleArmPlanner`
     - `DualArmPlanner`
   - 🔌 **Implementations:** reliable and well-tested implementations of these interfaces.
-    - Comimg soon: OMPL for single (TODO: and dual arm planning)
+    - **🚧 Coming soon:** OMPL for single (and dual arm) planning
 
 **Design goals:**
   - ⚓ **Robustness and stability:** provide an *off-the-shelf* motion planner that supports research by reliably covering most (not *all*) use cases at our labs, prioritizing dependability over niche, cutting-edge features.

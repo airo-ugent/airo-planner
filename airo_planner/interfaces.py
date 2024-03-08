@@ -1,15 +1,17 @@
 import abc
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
-from airo_typing import HomogeneousMatrixType, JointConfigurationType
+from airo_typing import HomogeneousMatrixType, JointConfigurationType, JointPathType
 
 
 class SingleArmPlanner(abc.ABC):
     """Base class that defines an interface for single-arm motion planners.
 
     The idea is that the custom settings for each motion planner are provided
-    through the constructor, and from then on all motion planners can be used
-    in the same way, e.g. for bemchmarking.
+    through the constructor. After creation the motion planner can then be
+
+      and from then on all motion planners can be used
+    in the same way, e.g. for benchmarking.
     """
 
     @abc.abstractmethod
@@ -17,12 +19,16 @@ class SingleArmPlanner(abc.ABC):
         self,
         start_configuration: JointConfigurationType,
         goal_configuration: JointConfigurationType,
-    ) -> Union[List[JointConfigurationType], None]:
+    ) -> JointPathType | None:
         """Plan a path from a start configuration to a goal configuration.
 
+        Note that this path is not guarenteed to be dense, i.e. the distance
+        between consecutive configurations in the path may be large. For this
+        reason, you might need to post-process these path before executing it.
+
         Args:
-            start_configuration: The start configuration.
-            goal_configuration: The goal configuration.
+            start_configuration: The start joint configuration.
+            goal_configuration: The goal joint configuration.
 
         Returns:
             A discretized path from the start configuration to the goal
@@ -31,12 +37,11 @@ class SingleArmPlanner(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def plan_to_tcp_pose(  # noqa: C901
+    def plan_to_tcp_pose(
         self,
         start_configuration: JointConfigurationType,
         tcp_pose_in_base: HomogeneousMatrixType,
-        desirable_goal_configurations: Optional[List[JointConfigurationType]] = None,
-    ) -> List[JointConfigurationType] | None:
+    ) -> JointPathType | None:
         """TODO"""
         raise NotImplementedError
 
