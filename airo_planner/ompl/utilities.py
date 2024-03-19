@@ -46,6 +46,13 @@ def bounds_to_ompl(joint_bounds: JointBoundsType) -> ob.RealVectorBounds:
     return bounds
 
 
+def allocDeterministicStateSampler(space: ob.StateSpace) -> ob.StateSampler:
+    from loguru import logger
+
+    logger.info("Allocating RealVectorDeterministicStateSampler")
+    return ob.RealVectorDeterministicStateSampler(space)
+
+
 def create_simple_setup(
     is_state_valid_fn: JointConfigurationCheckerType, joint_bounds: JointBoundsType
 ) -> og.SimpleSetup:
@@ -64,6 +71,9 @@ def create_simple_setup(
     space.setBounds(bounds_to_ompl(joint_bounds))
 
     is_state_valid_ompl = function_to_ompl(is_state_valid_fn, degrees_of_freedom)
+
+    space.setStateSamplerAllocator(ob.StateSamplerAllocator(allocDeterministicStateSampler))
+    # space.allocStateSampler()
 
     # Configure the SimpleSetup object
     simple_setup = og.SimpleSetup(space)

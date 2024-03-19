@@ -1,3 +1,5 @@
+import sys
+import time
 from typing import Callable, List
 
 import numpy as np
@@ -13,6 +15,7 @@ from ompl import geometric as og
 
 from airo_planner import JointBoundsType, SingleArmPlanner, path_from_ompl, state_to_ompl
 from airo_planner.ompl.utilities import create_simple_setup
+from airo_planner.selection.path_selection import choose_shortest_path
 
 # TODO move this to airo_typing
 JointConfigurationsModifierType = Callable[[List[JointConfigurationType]], List[JointConfigurationType]]
@@ -35,11 +38,10 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         self,
         is_state_valid_fn: JointConfigurationCheckerType,
         joint_bounds: JointBoundsType | None = None,
-        max_planning_time: float = 5.0,
         inverse_kinematics_fn: InverseKinematicsFunctionType | None = None,
         filter_goal_configurations_fn: JointConfigurationsModifierType | None = None,
         rank_goal_configurations_fn: JointConfigurationsModifierType | None = None,
-        choose_path_fn: JointPathChooserType | None = None,
+        choose_path_fn: JointPathChooserType | None = choose_shortest_path,
         degrees_of_freedom: int = 6,
     ):
         """Instiatiate a single-arm motion planner that uses OMPL. This creates
@@ -53,7 +55,6 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         Args:
             is_state_valid_fn: A function that checks if a given joint configuration is valid.
             inverse_kinematics_fn: A function that computes the inverse kinematics of a given TCP pose.
-            max_planning_time: The maximum time allowed for planning.
         """
         self.is_state_valid_fn = is_state_valid_fn
 
@@ -64,7 +65,6 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         self.choose_path_fn = choose_path_fn
 
         # Planning parameters
-        self.max_planning_time = max_planning_time
         self._degrees_of_freedom = degrees_of_freedom
         if joint_bounds is None:
             self.joint_bounds = np.full(degrees_of_freedom, -2 * np.pi), np.full(degrees_of_freedom, 2 * np.pi)
@@ -95,7 +95,7 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         simple_setup = self._simple_setup
 
         # Run planning algorithm
-        simple_setup.solve(self.max_planning_time)
+        simple_setup.solve()
 
         if not simple_setup.haveExactSolutionPath():
             return None
@@ -126,6 +126,7 @@ class SingleArmOmplPlanner(SingleArmPlanner):
             return None
 
         ik_solutions = self.inverse_kinematics_fn(tcp_pose_in_base)
+        ik_solutions = [solution.squeeze() for solution in ik_solutions]
         self._ik_solutions = ik_solutions  # Save for debugging
 
         if ik_solutions is None or len(ik_solutions) == 0:
@@ -152,12 +153,32 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         else:
             logger.info(f"Found {len(ik_solutions_valid)}/{len(ik_solutions_within_bounds)} valid solutions.")
 
+        # TODO filter the IK solutions -> warn when nothing is left
+
+        # TODO rank the IK solutions
+        terminate_on_first_success = self.rank_goal_configurations_fn is not None
+
+        logger.info(f"Running OMPL towards {len(ik_solutions_valid)} IK solutions.")
+        start_time = time.time()
         # Try solving to each IK solution in joint space.
         paths = []
-        for ik_solution in ik_solutions_valid:
+        for i, ik_solution in enumerate(ik_solutions_valid):
             path = self.plan_to_joint_configuration(start_configuration, ik_solution)
+
+            # My attempt to get the OMPL Info: messages to show up in the correct order between the loguru logs
+            # This however does not seems to work, so I don't know where those prints are buffered
+            sys.stdout.flush()
+
             if path is not None:
+                logger.info(f"Successfully found path to the valid IK solution with index {i}.")
+                if terminate_on_first_success is True:
+                    end_time = time.time()
+                    logger.info(f"Terminating on first success (planning time: {end_time - start_time:.2f} s).")
+                    return path
                 paths.append(path)
+
+        end_time = time.time()
+        logger.info(f"Found {len(paths)} paths towards IK solutions, (planning time: {end_time - start_time:.2f} s).")
 
         self._all_paths = paths  # Save for debugging
 
@@ -165,8 +186,14 @@ class SingleArmOmplPlanner(SingleArmPlanner):
             logger.info("No paths founds towards any IK solutions, returning None.")
             return None
 
-        solution_path = paths[0]
+        solution_path = self.choose_path_fn(paths)
         return solution_path
+
+        # TODO: exhaustive mode vs iterative mode (~= greedy mode)
+        # depending on the helper functions provide to the planner, it will operate in different modes
+        # by default, it operates in an exhaustive mode, meaning that it will treat all IK solutions the same, and plan a path to them all
+        # then it will return the shortest path
+
         # path_distances = [np.linalg.norm(path[-1] - start_configuration) for path in paths]
 
         # path_desirablities = None
