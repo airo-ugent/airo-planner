@@ -26,3 +26,31 @@ def rank_by_distance_to_desirable_configurations(
 
     ranked_configurations = [x for _, x in sorted(zip(distances, configurations))]
     return ranked_configurations
+
+
+def filter_with_distance_to_configurations(
+    joint_configurations: list[JointConfigurationType],
+    joint_configurations_close: list[JointConfigurationType],
+    distance_threshold: float = 0.01,
+) -> list[JointConfigurationType]:
+    """Filters a list of joint configurations, keeping only those within a specified distance of a reference set.
+
+    Args:
+        joint_configurations: The list of joint configurations to be filtered.
+        joint_configurations_close: A list of reference joint configurations.
+        distance_threshold: The maximum allowable distance between a configuration
+            and a reference configuration for it to be kept.
+
+    Returns:
+        A list of filtered joint configurations that are within the distance threshold
+        of at least one configuration in the reference set.
+    """
+    joint_configurations_to_keep = []
+
+    for joint_configuration in joint_configurations:
+        for joints_close in joint_configurations_close:
+            if np.linalg.norm(joint_configuration - joints_close) < distance_threshold:
+                joint_configurations_to_keep.append(joint_configuration)
+                break
+
+    return joint_configurations_to_keep

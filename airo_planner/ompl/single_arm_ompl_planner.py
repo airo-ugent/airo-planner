@@ -41,7 +41,7 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         inverse_kinematics_fn: InverseKinematicsFunctionType | None = None,
         filter_goal_configurations_fn: JointConfigurationsModifierType | None = None,
         rank_goal_configurations_fn: JointConfigurationsModifierType | None = None,
-        choose_path_fn: JointPathChooserType | None = choose_shortest_path,
+        choose_path_fn: JointPathChooserType = choose_shortest_path,
         degrees_of_freedom: int = 6,
     ):
         """Instiatiate a single-arm motion planner that uses OMPL. This creates
@@ -154,15 +154,26 @@ class SingleArmOmplPlanner(SingleArmPlanner):
             logger.info(f"Found {len(ik_solutions_valid)}/{len(ik_solutions_within_bounds)} valid solutions.")
 
         # TODO filter the IK solutions -> warn when nothing is left
+        if self.filter_goal_configurations_fn is not None:
+            ik_solutions_filtered = self.filter_goal_configurations_fn(ik_solutions_valid)
+            if len(ik_solutions_filtered) == 0:
+                logger.info("All IK solutions were filtered out, returning None.")
+                return None
+            else:
+                logger.info(
+                    f"Filtered IK solutions to {len(ik_solutions_filtered)}/{len(ik_solutions_valid)} solutions."
+                )
+        else:
+            ik_solutions_filtered = ik_solutions_valid
 
         # TODO rank the IK solutions
         terminate_on_first_success = self.rank_goal_configurations_fn is not None
 
-        logger.info(f"Running OMPL towards {len(ik_solutions_valid)} IK solutions.")
+        logger.info(f"Running OMPL towards {len(ik_solutions_filtered)} IK solutions.")
         start_time = time.time()
         # Try solving to each IK solution in joint space.
         paths = []
-        for i, ik_solution in enumerate(ik_solutions_valid):
+        for i, ik_solution in enumerate(ik_solutions_filtered):
             path = self.plan_to_joint_configuration(start_configuration, ik_solution)
 
             # My attempt to get the OMPL Info: messages to show up in the correct order between the loguru logs
