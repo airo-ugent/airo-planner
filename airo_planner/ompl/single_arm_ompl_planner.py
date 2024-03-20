@@ -115,12 +115,6 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         start_configuration: JointConfigurationType,
         tcp_pose_in_base: HomogeneousMatrixType,
     ) -> JointPathType | None:
-        # TODO: add options for specifying a preferred IK solutions, e.g. min distance to a joint configuration
-        # desirable_goal_joint_configurations = Optional[List[JointConfigurationType]]
-        # Without this we plan to all joint configs and pick the shortest path
-        # With it, we try the closest IK solution first and if it fails we try the next closest etc.
-        pass
-
         if self.inverse_kinematics_fn is None:
             logger.warning("Planning to TCP pose attempted but inverse_kinematics_fn was provided, returing None.")
             return None
@@ -166,8 +160,13 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         else:
             ik_solutions_filtered = ik_solutions_valid
 
-        # TODO rank the IK solutions
-        terminate_on_first_success = self.rank_goal_configurations_fn is not None
+        if self.rank_goal_configurations_fn is not None:
+            logger.info("Ranking IK solutions.")
+            terminate_on_first_success = True
+            ik_solutions_filtered = self.rank_goal_configurations_fn(ik_solutions_filtered)
+        else:
+            logger.info("No ranking function provided, will try planning to all valid IK solutions.")
+            terminate_on_first_success = False
 
         logger.info(f"Running OMPL towards {len(ik_solutions_filtered)} IK solutions.")
         start_time = time.time()
@@ -199,46 +198,3 @@ class SingleArmOmplPlanner(SingleArmPlanner):
 
         solution_path = self.choose_path_fn(paths)
         return solution_path
-
-        # TODO: exhaustive mode vs iterative mode (~= greedy mode)
-        # depending on the helper functions provide to the planner, it will operate in different modes
-        # by default, it operates in an exhaustive mode, meaning that it will treat all IK solutions the same, and plan a path to them all
-        # then it will return the shortest path
-
-        # path_distances = [np.linalg.norm(path[-1] - start_configuration) for path in paths]
-
-        # path_desirablities = None
-        # if desirable_goal_configurations is not None:
-        #     path_desirablities = []
-        #     for path in paths:
-        #         min_distance = np.inf
-        #         for desirable_goal in desirable_goal_configurations:
-        #             distance = np.linalg.norm(path[-1] - desirable_goal)
-        #             min_distance = min(min_distance, distance)  # type: ignore # I don't understand the mypy error here
-        #         path_desirablities.append(min_distance)
-
-        # path_lengths = [] # TODO calculate
-
-        # lengths_str = f"{[np.round(l, 3) for l in path_lengths]}"
-        # distances_str = f"{[np.round(d, 3) for d in path_distances]}"
-        # logger.info(f"Found {len(paths)} paths towards IK solutions:")
-        # logger.info(f"Path lengths: {lengths_str}")
-        # logger.info(f"Path distances: {distances_str}")
-
-        # if path_desirablities is not None:
-        #     desirabilities_str = f"{[np.round(d, 3) for d in path_desirablities]}"
-        #     logger.info(f"Path desirabilities: {desirabilities_str}")
-
-        # use_desirability = path_desirablities is not None
-
-        # if use_desirability:
-        #     idx = np.argmin(path_desirablities)
-        #     logger.info(
-        #         f"Length of chosen solution (= most desirable end): {path_lengths[idx]:.3f}, desirability: {path_desirablities[idx]:.3f}"
-        #     )
-        # else:
-        #     idx = np.argmin(path_lengths)
-        #     logger.info(f"Length of chosen solution (= shortest path): {path_lengths[idx]:.3f}")
-        #
-        # solution_path = paths[idx]
-        # return solution_path
