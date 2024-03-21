@@ -1,12 +1,11 @@
 from typing import Any, Callable
 
 import numpy as np
-from airo_typing import JointConfigurationCheckerType, JointConfigurationType, JointPathType
+from airo_typing import JointConfigurationCheckerType, JointPathType
 from ompl import base as ob
 from ompl import geometric as og
 
-# TODO move this to airo_typing
-JointBoundsType = tuple[JointConfigurationType, JointConfigurationType]
+from airo_planner import JointBoundsType
 
 
 def state_from_ompl(state: ob.State, n: int) -> np.ndarray:
@@ -50,6 +49,7 @@ def create_simple_setup(
     is_state_valid_fn: JointConfigurationCheckerType, joint_bounds: JointBoundsType
 ) -> og.SimpleSetup:
     """Create a simple setup for a robot with given joints bounds and a state validity checker.
+    Can be used for single arm and dual arm robots.
 
     Args:
         is_state_valid_fn: A function that checks if a joint configuration is valid.
@@ -82,3 +82,25 @@ def create_simple_setup(
     simple_setup.setPlanner(planner)
 
     return simple_setup
+
+
+def solve_and_smooth_path(simple_setup: og.SimpleSetup) -> JointPathType | None:
+    # Should be called after start and goal have been set
+
+    # Run planning algorithm
+    simple_setup.solve()
+
+    if not simple_setup.haveExactSolutionPath():
+        return None
+
+    # Simplify and smooth the path, note that this conserves path validity
+    simple_setup.simplifySolution()
+    path_simplifier = og.PathSimplifier(simple_setup.getSpaceInformation())
+    path = simple_setup.getSolutionPath()
+    path_simplifier.smoothBSpline(path)
+
+    # Extract path
+    degrees_of_freedom = simple_setup.getStateSpace().getDimension()
+    path_numpy = path_from_ompl(path, degrees_of_freedom)
+
+    return path_numpy

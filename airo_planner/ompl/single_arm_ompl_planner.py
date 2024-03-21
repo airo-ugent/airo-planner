@@ -1,4 +1,3 @@
-import sys
 import time
 from typing import Callable, List
 
@@ -11,11 +10,15 @@ from airo_typing import (
     JointPathType,
 )
 from loguru import logger
-from ompl import geometric as og
 
-from airo_planner import JointBoundsType, SingleArmPlanner, path_from_ompl, state_to_ompl
-from airo_planner.ompl.utilities import create_simple_setup
-from airo_planner.selection.path_selection import choose_shortest_path
+from airo_planner import (
+    JointBoundsType,
+    SingleArmPlanner,
+    choose_shortest_path,
+    create_simple_setup,
+    solve_and_smooth_path,
+    state_to_ompl,
+)
 
 # TODO move this to airo_typing
 JointConfigurationsModifierType = Callable[[List[JointConfigurationType]], List[JointConfigurationType]]
@@ -80,6 +83,14 @@ class SingleArmOmplPlanner(SingleArmPlanner):
     def _set_start_and_goal_configurations(
         self, start_configuration: JointConfigurationType, goal_configuration: JointConfigurationType
     ) -> None:
+        if not self.is_state_valid_fn(start_configuration):
+            raise ValueError("Planner was given an invalid start configuration.")
+
+        if not self.is_state_valid_fn(goal_configuration):
+            raise ValueError("Planner was given an invalid goal configuration.")
+
+        # TODO check joint bounds as well
+
         space = self._simple_setup.getStateSpace()
         start_state = state_to_ompl(start_configuration, space)
         goal_state = state_to_ompl(goal_configuration, space)
@@ -94,21 +105,8 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         self._set_start_and_goal_configurations(start_configuration, goal_configuration)
         simple_setup = self._simple_setup
 
-        # Run planning algorithm
-        simple_setup.solve()
-
-        if not simple_setup.haveExactSolutionPath():
-            return None
-
-        # Simplify and smooth the path, note that this conserves path validity
-        simple_setup.simplifySolution()
-        path_simplifier = og.PathSimplifier(simple_setup.getSpaceInformation())
-        path = simple_setup.getSolutionPath()
-        path_simplifier.smoothBSpline(path)
-
-        # Extract path
-        path_numpy = path_from_ompl(path, self._degrees_of_freedom)
-        return path_numpy
+        path = solve_and_smooth_path(simple_setup)
+        return path
 
     def plan_to_tcp_pose(  # noqa: C901
         self,
@@ -174,10 +172,6 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         paths = []
         for i, ik_solution in enumerate(ik_solutions_filtered):
             path = self.plan_to_joint_configuration(start_configuration, ik_solution)
-
-            # My attempt to get the OMPL Info: messages to show up in the correct order between the loguru logs
-            # This however does not seems to work, so I don't know where those prints are buffered
-            sys.stdout.flush()
 
             if path is not None:
                 logger.info(f"Successfully found path to the valid IK solution with index {i}.")

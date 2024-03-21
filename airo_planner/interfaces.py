@@ -1,5 +1,4 @@
 import abc
-from typing import List, Tuple, Union
 
 from airo_typing import HomogeneousMatrixType, JointConfigurationType, JointPathType
 
@@ -14,7 +13,6 @@ class SingleArmPlanner(abc.ABC):
     in the same way, e.g. for benchmarking.
     """
 
-    @abc.abstractmethod
     def plan_to_joint_configuration(
         self,
         start_configuration: JointConfigurationType,
@@ -36,7 +34,6 @@ class SingleArmPlanner(abc.ABC):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def plan_to_tcp_pose(
         self,
         start_configuration: JointConfigurationType,
@@ -54,14 +51,13 @@ class DualArmPlanner(abc.ABC):
     used for a particular motion.
     """
 
-    @abc.abstractmethod
     def plan_to_joint_configuration(
         self,
         start_configuration_left: JointConfigurationType,
         start_configuration_right: JointConfigurationType,
-        goal_configuration_left: Union[JointConfigurationType, None],
-        goal_configuration_right: Union[JointConfigurationType, None],
-    ) -> Union[List[Tuple[JointConfigurationType, JointConfigurationType]], None]:
+        goal_configuration_left: JointConfigurationType | None,
+        goal_configuration_right: JointConfigurationType | None,
+    ) -> JointPathType | None:
         """Plan a path from a start configurations to a goal configurations.
 
         The start cofinguration of the left and right arm must always be given.
@@ -85,13 +81,12 @@ class DualArmPlanner(abc.ABC):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def plan_to_tcp_pose(
         self,
         start_configuration_left: JointConfigurationType,
         start_configuration_right: JointConfigurationType,
-        tcp_pose_left_in_base: Union[HomogeneousMatrixType, None],
-        tcp_pose_right_in_base: Union[HomogeneousMatrixType, None],
-    ) -> Union[List[Tuple[JointConfigurationType, JointConfigurationType]], None]:
+        tcp_pose_left_in_base: HomogeneousMatrixType | None,
+        tcp_pose_right_in_base: HomogeneousMatrixType | None,
+    ) -> JointPathType | None:
         """TODO"""
         raise NotImplementedError
