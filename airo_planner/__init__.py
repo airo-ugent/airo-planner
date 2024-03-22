@@ -3,7 +3,12 @@
 # but for building and many toolings, you still need to have __init__ files (at least in the root of the package).
 # e.g. if you remove this init file and try to build with pip install .
 # you won't be able to import the dummy module.
-from airo_planner.joint_bounds import JointBoundsType, concatenate_joint_bounds, uniform_symmetric_joint_bounds
+from airo_planner.joint_bounds import (
+    JointBoundsType,
+    concatenate_joint_bounds,
+    is_within_bounds,
+    uniform_symmetric_joint_bounds,
+)
 from airo_planner.path_conversions import stack_joints
 from airo_planner.selection.goal_selection import (
     filter_with_distance_to_configurations,
@@ -32,6 +37,7 @@ __all__ = [
     "SingleArmOmplPlanner",
     "DualArmOmplPlanner",
     "JointBoundsType",
+    "is_within_bounds",
     "uniform_symmetric_joint_bounds",
     "concatenate_joint_bounds",
     "state_from_ompl",

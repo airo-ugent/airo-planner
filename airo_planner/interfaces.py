@@ -7,10 +7,8 @@ class SingleArmPlanner(abc.ABC):
     """Base class that defines an interface for single-arm motion planners.
 
     The idea is that the custom settings for each motion planner are provided
-    through the constructor. After creation the motion planner can then be
-
-      and from then on all motion planners can be used
-    in the same way, e.g. for benchmarking.
+    through the constructor. After creation all motion planners can then be
+    used in the same way, e.g. for benchmarking.
     """
 
     def plan_to_joint_configuration(
@@ -32,15 +30,14 @@ class SingleArmPlanner(abc.ABC):
             A discretized path from the start configuration to the goal
             configuration. If no solution could be found, then None is returned.
         """
-        raise NotImplementedError
+        raise NotImplementedError("This planner has not implemented planning to joint configurations (yet).")
 
     def plan_to_tcp_pose(
         self,
         start_configuration: JointConfigurationType,
-        tcp_pose_in_base: HomogeneousMatrixType,
+        tcp_pose: HomogeneousMatrixType,
     ) -> JointPathType | None:
-        """TODO"""
-        raise NotImplementedError
+        raise NotImplementedError("This planner has not implemented planning to TCP poses (yet).")
 
 
 class DualArmPlanner(abc.ABC):
@@ -79,14 +76,13 @@ class DualArmPlanner(abc.ABC):
             the start_configuration will simply be repeated in the path for that
             arm. If no solution could be found, then None is returned.
         """
-        raise NotImplementedError
+        raise NotImplementedError("This planner has not implemented planning to joint configurations (yet).")
 
     def plan_to_tcp_pose(
         self,
         start_configuration_left: JointConfigurationType,
         start_configuration_right: JointConfigurationType,
-        tcp_pose_left_in_base: HomogeneousMatrixType | None,
-        tcp_pose_right_in_base: HomogeneousMatrixType | None,
+        tcp_pose_left: HomogeneousMatrixType | None,
+        tcp_pose_right: HomogeneousMatrixType | None,
     ) -> JointPathType | None:
-        """TODO"""
-        raise NotImplementedError
+        raise NotImplementedError("This planner has not implemented planning to TCP poses (yet).")

@@ -6,6 +6,21 @@ from airo_typing import JointConfigurationType
 JointBoundsType = tuple[JointConfigurationType, JointConfigurationType]
 
 
+def is_within_bounds(joint_configuration: JointConfigurationType, joint_bounds: JointBoundsType) -> bool:
+    """Checks if a joint configuration is within the given bounds.
+
+    Args:
+        joint_configuration: The joint configuration to check.
+        joint_bounds: A tuple containing the lower and upper bounds for each joint.
+
+    Returns:
+        True if the joint configuration is within the bounds, False otherwise.
+    """
+    lower_bounds, upper_bounds = joint_bounds
+    is_within = np.all(lower_bounds <= joint_configuration) and np.all(joint_configuration <= upper_bounds)
+    return bool(is_within)
+
+
 def uniform_symmetric_joint_bounds(degrees_of_freedom: int, value: float = 2 * np.pi) -> JointBoundsType:
     """Creates joint bounds that are the same for each joint and where the min is the negative of the max.
 

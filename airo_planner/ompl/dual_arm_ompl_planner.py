@@ -1,5 +1,6 @@
 import numpy as np
 from airo_typing import (
+    HomogeneousMatrixType,
     InverseKinematicsFunctionType,
     JointConfigurationCheckerType,
     JointConfigurationType,
@@ -209,14 +210,16 @@ class DualArmOmplPlanner(DualArmPlanner):
         )
         return path
 
-    # def plan_to_tcp_pose(
-    #     self,
-    #     start_configuration_left: HomogeneousMatrixType,
-    #     start_configuration_right: HomogeneousMatrixType,
-    #     tcp_pose_left_in_base: HomogeneousMatrixType | None,
-    #     tcp_pose_right_in_base: HomogeneousMatrixType | None,
-    # ) -> JointPathType | None:
-    #     pass
+    def plan_to_tcp_pose(
+        self,
+        start_configuration_left: HomogeneousMatrixType,
+        start_configuration_right: HomogeneousMatrixType,
+        tcp_pose_left: HomogeneousMatrixType | None,
+        tcp_pose_right: HomogeneousMatrixType | None,
+    ) -> JointPathType | None:
+        if tcp_pose_left is None and tcp_pose_right is None:
+            raise ValueError("A goal TCP pose must be specified for at least one of the arms.")
+        return None
 
     # def _plan_to_tcp_pose_left_arm_only(
     #     self,

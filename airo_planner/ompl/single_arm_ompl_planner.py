@@ -16,11 +16,13 @@ from airo_planner import (
     SingleArmPlanner,
     choose_shortest_path,
     create_simple_setup,
+    is_within_bounds,
     solve_and_smooth_path,
     state_to_ompl,
+    uniform_symmetric_joint_bounds,
 )
 
-# TODO move this to airo_typing
+# TODO move this to airo_typing?
 JointConfigurationsModifierType = Callable[[List[JointConfigurationType]], List[JointConfigurationType]]
 JointPathChooserType = Callable[[List[JointPathType]], JointPathType]
 
@@ -70,7 +72,7 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         # Planning parameters
         self._degrees_of_freedom = degrees_of_freedom
         if joint_bounds is None:
-            self.joint_bounds = np.full(degrees_of_freedom, -2 * np.pi), np.full(degrees_of_freedom, 2 * np.pi)
+            self.joint_bounds = uniform_symmetric_joint_bounds(self._degrees_of_freedom)
         else:
             self.joint_bounds = joint_bounds
 
@@ -90,6 +92,11 @@ class SingleArmOmplPlanner(SingleArmPlanner):
             raise ValueError("Planner was given an invalid goal configuration.")
 
         # TODO check joint bounds as well
+        if not is_within_bounds(start_configuration, self.joint_bounds):
+            raise ValueError("Start configuration is not within the joint bounds.")
+
+        if not is_within_bounds(goal_configuration, self.joint_bounds):
+            raise ValueError("Goal configuration is not within the joint bounds.")
 
         space = self._simple_setup.getStateSpace()
         start_state = state_to_ompl(start_configuration, space)
@@ -111,13 +118,13 @@ class SingleArmOmplPlanner(SingleArmPlanner):
     def plan_to_tcp_pose(  # noqa: C901
         self,
         start_configuration: JointConfigurationType,
-        tcp_pose_in_base: HomogeneousMatrixType,
+        tcp_pose: HomogeneousMatrixType,
     ) -> JointPathType | None:
-        if self.inverse_kinematics_fn is None:
-            logger.warning("Planning to TCP pose attempted but inverse_kinematics_fn was provided, returing None.")
-            return None
 
-        ik_solutions = self.inverse_kinematics_fn(tcp_pose_in_base)
+        if self.inverse_kinematics_fn is None:
+            raise AttributeError("Inverse kinematics function is required for planning to TCP poses.")
+
+        ik_solutions = self.inverse_kinematics_fn(tcp_pose)
         ik_solutions = [solution.squeeze() for solution in ik_solutions]
         self._ik_solutions = ik_solutions  # Save for debugging
 
@@ -145,7 +152,6 @@ class SingleArmOmplPlanner(SingleArmPlanner):
         else:
             logger.info(f"Found {len(ik_solutions_valid)}/{len(ik_solutions_within_bounds)} valid solutions.")
 
-        # TODO filter the IK solutions -> warn when nothing is left
         if self.filter_goal_configurations_fn is not None:
             ik_solutions_filtered = self.filter_goal_configurations_fn(ik_solutions_valid)
             if len(ik_solutions_filtered) == 0:
