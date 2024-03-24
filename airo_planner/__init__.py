@@ -3,6 +3,20 @@
 # but for building and many toolings, you still need to have __init__ files (at least in the root of the package).
 # e.g. if you remove this init file and try to build with pip install .
 # you won't be able to import the dummy module.
+from airo_planner.exceptions import (
+    AllGoalConfigurationsRemovedError,
+    GoalConfigurationOutOfBoundsError,
+    InvalidConfigurationError,
+    InvalidGoalConfigurationError,
+    InvalidStartConfigurationError,
+    JointOutOfBoundsError,
+    NoInverseKinematicsSolutionsError,
+    NoInverseKinematicsSolutionsWithinBoundsError,
+    NoPathFoundError,
+    NoValidInverseKinematicsSolutionsError,
+    PlannerError,
+    StartConfigurationOutOfBoundsError,
+)
 from airo_planner.joint_bounds import (
     JointBoundsType,
     concatenate_joint_bounds,
@@ -25,6 +39,7 @@ from airo_planner.ompl.utilities import (  # isort:skip
     create_simple_setup,
     solve_and_smooth_path,
 )
+
 
 from airo_planner.interfaces import DualArmPlanner, SingleArmPlanner  # isort:skip
 from airo_planner.ompl.single_arm_ompl_planner import SingleArmOmplPlanner  # isort:skip
@@ -52,4 +67,16 @@ __all__ = [
     "rank_by_distance_to_desirable_configurations",
     "filter_with_distance_to_configurations",
     "stack_joints",
+    "PlannerError",
+    "NoPathFoundError",
+    "InvalidConfigurationError",
+    "InvalidStartConfigurationError",
+    "InvalidGoalConfigurationError",
+    "JointOutOfBoundsError",
+    "StartConfigurationOutOfBoundsError",
+    "GoalConfigurationOutOfBoundsError",
+    "NoInverseKinematicsSolutionsError",
+    "NoInverseKinematicsSolutionsWithinBoundsError",
+    "NoValidInverseKinematicsSolutionsError",
+    "AllGoalConfigurationsRemovedError",
 ]

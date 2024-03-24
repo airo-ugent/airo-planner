@@ -10,6 +10,7 @@ from airo_typing import (
 from airo_planner import (
     DualArmPlanner,
     JointBoundsType,
+    NoPathFoundError,
     SingleArmOmplPlanner,
     concatenate_joint_bounds,
     create_simple_setup,
@@ -121,7 +122,7 @@ class DualArmOmplPlanner(DualArmPlanner):
         start_configuration_right: JointConfigurationType,
         goal_configuration_left: JointConfigurationType,
         goal_configuration_right: JointConfigurationType,
-    ) -> JointPathType | None:
+    ) -> JointPathType:
 
         # Set start and goal
         simple_setup = self._simple_setup
@@ -132,6 +133,10 @@ class DualArmOmplPlanner(DualArmPlanner):
 
         # Run planning algorithm
         path = solve_and_smooth_path(simple_setup)
+
+        if path is None:
+            raise NoPathFoundError(start_configuration_left, goal_configuration_left)
+
         return path
 
     def _plan_to_joint_configuration_left_arm_only(
@@ -139,7 +144,7 @@ class DualArmOmplPlanner(DualArmPlanner):
         start_configuration_left: JointConfigurationType,
         start_configuration_right: JointConfigurationType,
         goal_configuration_left: JointConfigurationType,
-    ) -> JointPathType | None:
+    ) -> JointPathType:
         # Set right goal to right start configuration
         self._set_start_and_goal_configurations(
             start_configuration_left, start_configuration_right, goal_configuration_left, start_configuration_right
@@ -162,7 +167,7 @@ class DualArmOmplPlanner(DualArmPlanner):
         start_configuration_left: JointConfigurationType,
         start_configuration_right: JointConfigurationType,
         goal_configuration_right: JointConfigurationType,
-    ) -> JointPathType | None:
+    ) -> JointPathType:
         # Set left goal to left start configuration
         self._set_start_and_goal_configurations(
             start_configuration_left, start_configuration_right, start_configuration_left, goal_configuration_right
@@ -186,7 +191,7 @@ class DualArmOmplPlanner(DualArmPlanner):
         start_configuration_right: JointConfigurationType,
         goal_configuration_left: JointConfigurationType | None,
         goal_configuration_right: JointConfigurationType | None,
-    ) -> JointPathType | None:
+    ) -> JointPathType:
         if goal_configuration_left is None and goal_configuration_right is None:
             raise ValueError("A goal configurations must be specified for at least one of the arms.")
 
@@ -216,18 +221,18 @@ class DualArmOmplPlanner(DualArmPlanner):
         start_configuration_right: HomogeneousMatrixType,
         tcp_pose_left: HomogeneousMatrixType | None,
         tcp_pose_right: HomogeneousMatrixType | None,
-    ) -> JointPathType | None:
+    ) -> JointPathType:
         if tcp_pose_left is None and tcp_pose_right is None:
             raise ValueError("A goal TCP pose must be specified for at least one of the arms.")
-        return None
+        raise NoPathFoundError(start_configuration_left, start_configuration_right)  # this just temporary
 
     # def _plan_to_tcp_pose_left_arm_only(
     #     self,
     #     start_configuration_left: JointConfigurationType,
     #     start_configuration_right: JointConfigurationType,
     #     tcp_pose_left_in_base: HomogeneousMatrixType,
-    #     desirable_goal_configurations_left: List[JointConfigurationType] | None = None,
-    # ) -> List[Tuple[JointConfigurationType, JointConfigurationType]] | None:
+    #     desirable_goal_configurations_left: list[JointConfigurationType] | None = None,
+    # ) -> list[tuple[JointConfigurationType, JointConfigurationType]] | None:
     #     # Set right goal to right start configuration
     #     self._set_start_and_goal_configurations(
     #         start_configuration_left, start_configuration_right, start_configuration_left, start_configuration_right
@@ -248,8 +253,8 @@ class DualArmOmplPlanner(DualArmPlanner):
     #     start_configuration_left: JointConfigurationType,
     #     start_configuration_right: JointConfigurationType,
     #     tcp_pose_right_in_base: HomogeneousMatrixType,
-    #     desirable_goal_configurations_right: List[JointConfigurationType] | None = None,
-    # ) -> List[Tuple[JointConfigurationType, JointConfigurationType]] | None:
+    #     desirable_goal_configurations_right: list[JointConfigurationType] | None = None,
+    # ) -> list[tuple[JointConfigurationType, JointConfigurationType]] | None:
     #     # Set left goal to left start configuration
     #     self._set_start_and_goal_configurations(
     #         start_configuration_left, start_configuration_right, start_configuration_left, start_configuration_right
@@ -271,7 +276,7 @@ class DualArmOmplPlanner(DualArmPlanner):
     #     start_configuration_right: JointConfigurationType,
     #     tcp_pose_left_in_base: HomogeneousMatrixType,
     #     tcp_pose_right_in_base: HomogeneousMatrixType,
-    # ) -> List[Tuple[JointConfigurationType, JointConfigurationType]] | None:
+    # ) -> list[tuple[JointConfigurationType, JointConfigurationType]] | None:
     #     if self.inverse_kinematics_left_fn is None or self.inverse_kinematics_right_fn is None:
     #         logger.info(
     #             "Planning to left and right TCP poses attempted but inverse_kinematics_fn was not provided for both arms, returing None."
@@ -372,9 +377,9 @@ class DualArmOmplPlanner(DualArmPlanner):
     #     start_configuration_right: JointConfigurationType,
     #     tcp_pose_left_in_base: HomogeneousMatrixType | None,
     #     tcp_pose_right_in_base: HomogeneousMatrixType | None,
-    #     desirable_goal_configurations_left: List[JointConfigurationType] | None = None,
-    #     desirable_goal_configurations_right: List[JointConfigurationType] | None = None,
-    # ) -> List[Tuple[JointConfigurationType, JointConfigurationType]] | None:
+    #     desirable_goal_configurations_left: list[JointConfigurationType] | None = None,
+    #     desirable_goal_configurations_right: list[JointConfigurationType] | None = None,
+    # ) -> list[tuple[JointConfigurationType, JointConfigurationType]] | None:
     #     if tcp_pose_left_in_base is None and tcp_pose_right_in_base is None:
     #         raise ValueError("A goal TCP pose must be specified for at least one of the arms.")
 

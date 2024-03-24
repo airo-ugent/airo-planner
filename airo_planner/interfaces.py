@@ -12,10 +12,8 @@ class SingleArmPlanner(abc.ABC):
     """
 
     def plan_to_joint_configuration(
-        self,
-        start_configuration: JointConfigurationType,
-        goal_configuration: JointConfigurationType,
-    ) -> JointPathType | None:
+        self, start_configuration: JointConfigurationType, goal_configuration: JointConfigurationType
+    ) -> JointPathType:
         """Plan a path from a start configuration to a goal configuration.
 
         Note that this path is not guarenteed to be dense, i.e. the distance
@@ -28,15 +26,17 @@ class SingleArmPlanner(abc.ABC):
 
         Returns:
             A discretized path from the start configuration to the goal
-            configuration. If no solution could be found, then None is returned.
+            configuration.
+
+        Raises:
+            NoPathFoundError: If no path could be found between the start and
+            goal configuration.
         """
         raise NotImplementedError("This planner has not implemented planning to joint configurations (yet).")
 
     def plan_to_tcp_pose(
-        self,
-        start_configuration: JointConfigurationType,
-        tcp_pose: HomogeneousMatrixType,
-    ) -> JointPathType | None:
+        self, start_configuration: JointConfigurationType, tcp_pose: HomogeneousMatrixType
+    ) -> JointPathType:
         raise NotImplementedError("This planner has not implemented planning to TCP poses (yet).")
 
 
@@ -54,7 +54,7 @@ class DualArmPlanner(abc.ABC):
         start_configuration_right: JointConfigurationType,
         goal_configuration_left: JointConfigurationType | None,
         goal_configuration_right: JointConfigurationType | None,
-    ) -> JointPathType | None:
+    ) -> JointPathType:
         """Plan a path from a start configurations to a goal configurations.
 
         The start cofinguration of the left and right arm must always be given.
@@ -75,6 +75,10 @@ class DualArmPlanner(abc.ABC):
             configuration. If the goal_configuration of an arm is None, then
             the start_configuration will simply be repeated in the path for that
             arm. If no solution could be found, then None is returned.
+
+        Raises:
+            NoPathFoundError: If no path could be found between the start and
+            goal configurations.
         """
         raise NotImplementedError("This planner has not implemented planning to joint configurations (yet).")
 
@@ -84,5 +88,5 @@ class DualArmPlanner(abc.ABC):
         start_configuration_right: JointConfigurationType,
         tcp_pose_left: HomogeneousMatrixType | None,
         tcp_pose_right: HomogeneousMatrixType | None,
-    ) -> JointPathType | None:
+    ) -> JointPathType:
         raise NotImplementedError("This planner has not implemented planning to TCP poses (yet).")
