@@ -7,6 +7,7 @@
 # We disable isort for the entire __init__.py file, because the order of imports is important here.
 # If a function depends on another function, the dependent function should be imported after the function it depends on.
 # isort: skip_file
+from airo_planner.path_conversions import stack_joints
 from airo_planner.exceptions import (
     AllGoalConfigurationsRemovedError,
     GoalConfigurationOutOfBoundsError,
@@ -27,7 +28,6 @@ from airo_planner.joint_bounds import (
     is_within_bounds,
     uniform_symmetric_joint_bounds,
 )
-from airo_planner.path_conversions import stack_joints
 from airo_planner.selection.goal_selection import (
     filter_with_distance_to_configurations,
     rank_by_distance_to_desirable_configurations,
@@ -44,13 +44,19 @@ from airo_planner.ompl.utilities import (
     solve_and_smooth_path,
 )
 
-
-from airo_planner.interfaces import DualArmPlanner, SingleArmPlanner
 from airo_planner.multiple_goal_planner import (
     MultipleGoalPlanner,
     JointConfigurationsModifierType,
     JointPathChooserType,
 )
+
+from airo_planner.function_conversions import (
+    convert_dual_arm_joints_modifier_to_single_arm,
+    convert_dual_arm_path_chooser_to_single_arm,
+)
+
+from airo_planner.interfaces import DualArmPlanner, SingleArmPlanner
+
 from airo_planner.ompl.single_arm_ompl_planner import SingleArmOmplPlanner
 from airo_planner.ompl.dual_arm_ompl_planner import DualArmOmplPlanner
 
@@ -79,6 +85,8 @@ __all__ = [
     "rank_by_distance_to_desirable_configurations",
     "filter_with_distance_to_configurations",
     "stack_joints",
+    "convert_dual_arm_joints_modifier_to_single_arm",
+    "convert_dual_arm_path_chooser_to_single_arm",
     "PlannerError",
     "NoPathFoundError",
     "InvalidConfigurationError",

@@ -19,6 +19,8 @@ from airo_planner import (
     SingleArmOmplPlanner,
     choose_shortest_path,
     concatenate_joint_bounds,
+    convert_dual_arm_joints_modifier_to_single_arm,
+    convert_dual_arm_path_chooser_to_single_arm,
     create_simple_setup,
     solve_and_smooth_path,
     stack_joints,
@@ -88,7 +90,7 @@ class DualArmOmplPlanner(DualArmPlanner, MultipleGoalPlanner):
             joint_bounds_right_ = uniform_symmetric_joint_bounds(degrees_of_freedom_right)
         else:
             joint_bounds_right_ = joint_bounds_right
-        joint_bounds = concatenate_joint_bounds([joint_bounds_left_, joint_bounds_right_])
+        joint_bounds = concatenate_joint_bounds(joint_bounds_left_, joint_bounds_right_)
 
         self.joint_bounds = joint_bounds
         self.joint_bounds_left = joint_bounds_left_
@@ -114,23 +116,88 @@ class DualArmOmplPlanner(DualArmPlanner, MultipleGoalPlanner):
         start_configuration_left: JointConfigurationType,
         start_configuration_right: JointConfigurationType,
     ) -> None:
+        """Create single arm planners for the left and right arm.
+
+        The implementation of this function is quite tricky, because we have to convert all the functions that work
+        on dual arm joint configurations, to work on single arm joint configurations. As we do this, we freeze
+        the configuration of one of the arms to its start configuration.
+
+        TODO: consider creating a "sinlge_arm_ompl_planner_from_dual_arm_planner()" helper function or similar.
+        """
+
         # Replace single arm planners for the left and right arm
+        # We basically have to freeze the start configuration of one of the arms in all the helper functions
         def is_left_state_valid_fn(left_state: JointConfigurationType) -> bool:
-            return self.is_state_valid_fn(np.concatenate((left_state, start_configuration_right)))
+            return self.is_state_valid_fn(stack_joints(left_state, start_configuration_right))
 
         def is_right_state_valid_fn(right_state: JointConfigurationType) -> bool:
-            return self.is_state_valid_fn(np.concatenate((start_configuration_left, right_state)))
+            return self.is_state_valid_fn(stack_joints(start_configuration_left, right_state))
+
+        filter_goal_configurations_fn_left = None
+        filter_goal_configurations_fn_right = None
+        rank_goal_configurations_fn_left = None
+        rank_goal_configurations_fn_right = None
+
+        if self.filter_goal_configurations_fn is not None:
+            filter_goal_configurations_fn_left = convert_dual_arm_joints_modifier_to_single_arm(
+                self.filter_goal_configurations_fn,
+                start_configuration_right,
+                self.degrees_of_freedom_left,
+                to_left=True,
+            )
+            filter_goal_configurations_fn_right = convert_dual_arm_joints_modifier_to_single_arm(
+                self.filter_goal_configurations_fn,
+                start_configuration_left,
+                self.degrees_of_freedom_left,
+                to_left=False,
+            )
+
+        if self.rank_goal_configurations_fn is not None:
+            rank_goal_configurations_fn_left = convert_dual_arm_joints_modifier_to_single_arm(
+                self.rank_goal_configurations_fn,
+                start_configuration_right,
+                self.degrees_of_freedom_left,
+                to_left=True,
+            )
+            rank_goal_configurations_fn_right = convert_dual_arm_joints_modifier_to_single_arm(
+                self.rank_goal_configurations_fn,
+                start_configuration_left,
+                self.degrees_of_freedom_left,
+                to_left=False,
+            )
+
+        if self.choose_path_fn is not None:
+            choose_path_fn_left = convert_dual_arm_path_chooser_to_single_arm(
+                self.choose_path_fn,
+                start_configuration_right,
+                self.degrees_of_freedom_left,
+                to_left=True,
+            )
+            choose_path_fn_right = convert_dual_arm_path_chooser_to_single_arm(
+                self.choose_path_fn,
+                start_configuration_left,
+                self.degrees_of_freedom_left,
+                to_left=False,
+            )
 
         self._single_arm_planner_left = SingleArmOmplPlanner(
             is_left_state_valid_fn,
             self.joint_bounds_left,
             self.inverse_kinematics_left_fn,
+            filter_goal_configurations_fn_left,
+            rank_goal_configurations_fn_left,
+            choose_path_fn_left,
+            self.degrees_of_freedom_left,
         )
 
         self._single_arm_planner_right = SingleArmOmplPlanner(
             is_right_state_valid_fn,
             self.joint_bounds_right,
             self.inverse_kinematics_right_fn,
+            filter_goal_configurations_fn_right,
+            rank_goal_configurations_fn_right,
+            choose_path_fn_right,
+            self.degrees_of_freedom_right,
         )
 
     def _plan_to_joint_configuration_dual_arm(

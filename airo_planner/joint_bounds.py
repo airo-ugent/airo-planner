@@ -1,6 +1,8 @@
 import numpy as np
 from airo_typing import JointConfigurationType
 
+from airo_planner import stack_joints
+
 # TODO consider moving this to airo_typing
 # note: can be used both for single arm and dual arm joint bounds
 JointBoundsType = tuple[JointConfigurationType, JointConfigurationType]
@@ -41,18 +43,19 @@ def uniform_symmetric_joint_bounds(degrees_of_freedom: int, value: float = 2 * n
     return joint_bounds
 
 
-def concatenate_joint_bounds(joint_bounds: list[JointBoundsType]) -> JointBoundsType:
-    """Concatenates a list of joint bounds into a single combined bounds tuple.
+def concatenate_joint_bounds(joint_bounds_a: JointBoundsType, joint_bounds_b: JointBoundsType) -> JointBoundsType:
+    """Stacks two joint bounds together into a single combined bounds tuple.
 
     Args:
-        joint_bounds: A list of bounds for a set of joints.
+        joint_bounds_a: The first joint bounds.
+        joint_bounds_b: The second joint bounds.
 
     Returns:
         A tuple containing:
             * Concatenated lower bounds.
             * Concatenated upper bounds.
     """
-    lower_bounds = np.concatenate([bounds[0] for bounds in joint_bounds])
-    upper_bounds = np.concatenate([bounds[1] for bounds in joint_bounds])
+    lower_bounds = stack_joints(joint_bounds_a[0], joint_bounds_b[0])
+    upper_bounds = stack_joints(joint_bounds_a[1], joint_bounds_b[1])
     concatenated_joints_bounds = (lower_bounds, upper_bounds)
     return concatenated_joints_bounds
