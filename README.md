@@ -12,7 +12,7 @@ Python package for single and dual robot arm motion planning.
     - `SingleArmPlanner`
     - `DualArmPlanner`
   - 🔌 **Implementations:** reliable and well-tested implementations of these interfaces.
-    - **🚧 Coming soon:** OMPL for single (and dual arm) planning
+    - OMPL for single and dual arm planning to joint configurations or TCP poses
 
 **Design goals:**
   - ⚓ **Robustness and stability:** provide an *off-the-shelf* motion planner that supports research by reliably covering most (not *all*) use cases at our labs, prioritizing dependability over niche, cutting-edge features.
@@ -37,11 +37,14 @@ Complete the [Installation 🔧](#installation-🔧) and then see 🚧 **Coming 
 
 
 ## Installation 🔧
-**🚧 Coming soon:** `airo-planner` is available on PyPI and installable with pip:
+`airo-planner` is available on PyPI and installable with pip:
 ```
 pip install airo-planner
 ```
-However it depends on `ompl` with its Python bindings, which are not available on PyPI yet. The easiest way to install this for now is to use a pre-release wheel fom their [Github](https://github.com/ompl/ompl/releases):
+
+**🚧 Important post-installation step**
+
+We depend on `ompl` with its Python bindings, which are not available on PyPI yet. The easiest way to install this for now is to use a pre-release wheel fom their [Github](https://github.com/ompl/ompl/releases):
 ```
 pip install https://github.com/ompl/ompl/releases/download/prerelease/ompl-1.6.0-cp310-cp310-manylinux_2_28_x86_64.whl
 ```
