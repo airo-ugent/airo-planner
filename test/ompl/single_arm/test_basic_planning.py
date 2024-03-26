@@ -39,7 +39,7 @@ def test_joint_space_tunnel():
         return joint_space_tunnel_fn
 
     joint_space_wall_fn = create_joint_space_tunnel_fn(0.0)
-    joint_space_tunnel_fn = create_joint_space_tunnel_fn(1.0)
+    joint_space_tunnel_fn = create_joint_space_tunnel_fn(10.0)
 
     # Create an unreasonable narrow tunnel as well
     joint_space_narrow_tunnel_fn = create_joint_space_tunnel_fn(0.00000001)

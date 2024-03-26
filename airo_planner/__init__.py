@@ -3,6 +3,10 @@
 # but for building and many toolings, you still need to have __init__ files (at least in the root of the package).
 # e.g. if you remove this init file and try to build with pip install .
 # you won't be able to import the dummy module.
+
+# We disable isort for the entire __init__.py file, because the order of imports is important here.
+# If a function depends on another function, the dependent function should be imported after the function it depends on.
+# isort: skip_file
 from airo_planner.exceptions import (
     AllGoalConfigurationsRemovedError,
     GoalConfigurationOutOfBoundsError,
@@ -30,7 +34,7 @@ from airo_planner.selection.goal_selection import (
 )
 from airo_planner.selection.path_selection import choose_shortest_path
 
-from airo_planner.ompl.utilities import (  # isort:skip
+from airo_planner.ompl.utilities import (
     function_to_ompl,
     state_to_ompl,
     path_from_ompl,
@@ -41,14 +45,22 @@ from airo_planner.ompl.utilities import (  # isort:skip
 )
 
 
-from airo_planner.interfaces import DualArmPlanner, SingleArmPlanner  # isort:skip
-from airo_planner.ompl.single_arm_ompl_planner import SingleArmOmplPlanner  # isort:skip
-from airo_planner.ompl.dual_arm_ompl_planner import DualArmOmplPlanner  # isort:skip
+from airo_planner.interfaces import DualArmPlanner, SingleArmPlanner
+from airo_planner.multiple_goal_planner import (
+    MultipleGoalPlanner,
+    JointConfigurationsModifierType,
+    JointPathChooserType,
+)
+from airo_planner.ompl.single_arm_ompl_planner import SingleArmOmplPlanner
+from airo_planner.ompl.dual_arm_ompl_planner import DualArmOmplPlanner
 
 
 __all__ = [
     "SingleArmPlanner",
     "DualArmPlanner",
+    "MultipleGoalPlanner",
+    "JointConfigurationsModifierType",
+    "JointPathChooserType",
     "SingleArmOmplPlanner",
     "DualArmOmplPlanner",
     "JointBoundsType",
