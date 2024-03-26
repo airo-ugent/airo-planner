@@ -121,7 +121,7 @@ class MultipleGoalPlanner(abc.ABC):
                 continue
 
             if return_first_success:
-                logger.info(f"Returning first successful path (planning time: {time.time() - start_time:.2f} s).")
+                logger.success(f"Returning first successful path (planning time: {time.time() - start_time:.2f} s).")
                 return path
             paths.append(path)
 
@@ -131,14 +131,16 @@ class MultipleGoalPlanner(abc.ABC):
             raise NoPathFoundError(start_configuration, goal_configurations)
 
         self._all_paths = paths  # Saved for debugging
-        logger.info(f"Found {len(paths)} paths towards IK solutions, (planning time: {end_time - start_time:.2f} s).")
+        logger.success(
+            f"Found {len(paths)} paths towards IK solutions, (planning time: {end_time - start_time:.2f} s)."
+        )
 
         solution_path = self.choose_path_fn(paths)
 
         if solution_path is None:
             raise RuntimeError(f"Path choosing function did not return a path out of {len(paths)} options.")
 
-        logger.info(f"Chose path with {len(solution_path)} waypoints.")
+        logger.success(f"Chose path with {len(solution_path)} waypoints.")
 
         return solution_path
 

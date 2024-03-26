@@ -124,6 +124,8 @@ class SingleArmOmplPlanner(SingleArmPlanner, MultipleGoalPlanner):
         if path is None:
             raise NoPathFoundError(start_configuration, goal_configuration)
 
+        logger.success(f"Successfully found path (with {len(path)} waypoints).")
+
         return path
 
     def _plan_to_joint_configuration_stacked(
