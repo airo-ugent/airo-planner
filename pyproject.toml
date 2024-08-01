@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "airo-planner"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name = "Andreas Verleysen", email = "andreas.verleysen@ugent.be" },
   { name = "Victor-Louis De Gusseme", email = "victorlouisdg@gmail.com" },
+  { name = "Mathieu De Coster", email = "mathieu.decoster@ugent.be" }
 ]
 description = "Motion planning for single and dual robot arms."
 readme = "README.md"
@@ -18,7 +19,7 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 
-dependencies = ["airo-drake>=0.0.4", "loguru"]
+dependencies = ["airo-drake>=0.0.6", "loguru"]
 
 [project.urls]
 Homepage = "https://github.com/airo-ugent/airo-planner"

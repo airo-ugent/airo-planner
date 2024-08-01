@@ -17,12 +17,13 @@ class MobilePlatformOmplPlanner(MobilePlatformPlanner):
     """
 
     def __init__(self, is_state_valid_fn: JointConfigurationCheckerType):
-        # TODO: JointConfigurationCheckerType is not ideal here, should be a new type.
+        # TODO: JointConfigurationCheckerType is not ideal here, should be a new type or rename this type?
         self.is_state_valid_fn = is_state_valid_fn
 
+        # TODO: Allow user to set these bounds.
         joint_bounds = (
-            np.full(3, -np.inf),
-            np.full(3, np.inf),
+            np.array([-10.0, -10.0, -4 * np.pi]),
+            np.array([10.0, 10.0, 4 * np.pi])
         )
         self._simple_setup = create_simple_setup(self.is_state_valid_fn, joint_bounds)
 
