@@ -49,6 +49,11 @@ We depend on `ompl` with its Python bindings, which are not available on PyPI ye
 pip install https://github.com/ompl/ompl/releases/download/prerelease/ompl-1.6.0-cp310-cp310-manylinux_2_28_x86_64.whl
 ```
 
+For Ubuntu 22.04, use a different wheel:
+```
+pip install https://github.com/ompl/ompl/releases/download/prerelease/ompl-1.6.0-cp311-cp311-manylinux_2_28_x86_64.whl
+```
+
 ## Developer guide 🛠️
 See the [`airo-mono`](https://github.com/airo-ugent/airo-mono) developer guide.
 A very similar process and tools are used for this package.

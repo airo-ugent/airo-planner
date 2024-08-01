@@ -1,6 +1,33 @@
 import abc
 
-from airo_typing import HomogeneousMatrixType, JointConfigurationType, JointPathType
+from airo_typing import HomogeneousMatrixType, JointConfigurationType, JointPathType, Vector3DType
+
+
+# TODO: plan based on wheel configs as well or instead?
+class MobilePlatformPlanner(abc.ABC):
+    """Base class that defines an interface for mobile platform motion planners,
+    where the platform is represented as an unbounded planar joint.
+
+    The idea is that the custom settings for each motion planner are provided
+    through the constructor. After creation all motion planners can then be
+    used in the same way, e.g. for benchmarking.
+    """
+
+    @abc.abstractmethod
+    # TODO: Attitude2DType?
+    def plan_to_pose(self, start_pose: Vector3DType, goal_pose: Vector3DType) -> JointPathType:
+        """Plan a path from a start pose to a goal pose.
+
+        Args:
+            start_pose: The (x, y, theta) start pose.
+            goal_pose: The (x, y, theta) goal pose.
+
+        Returns:
+            A discretized path from the start pose to the goal pose.
+
+        Raises:
+            NoPathFoundError: If no path could be found between the start and
+            goal configuration."""
 
 
 class SingleArmPlanner(abc.ABC):
@@ -12,7 +39,7 @@ class SingleArmPlanner(abc.ABC):
     """
 
     def plan_to_joint_configuration(
-        self, start_configuration: JointConfigurationType, goal_configuration: JointConfigurationType
+            self, start_configuration: JointConfigurationType, goal_configuration: JointConfigurationType
     ) -> JointPathType:
         """Plan a path from a start configuration to a goal configuration.
 
@@ -35,7 +62,7 @@ class SingleArmPlanner(abc.ABC):
         raise NotImplementedError("This planner has not implemented planning to joint configurations (yet).")
 
     def plan_to_tcp_pose(
-        self, start_configuration: JointConfigurationType, tcp_pose: HomogeneousMatrixType
+            self, start_configuration: JointConfigurationType, tcp_pose: HomogeneousMatrixType
     ) -> JointPathType:
         raise NotImplementedError("This planner has not implemented planning to TCP poses (yet).")
 
@@ -49,11 +76,11 @@ class DualArmPlanner(abc.ABC):
     """
 
     def plan_to_joint_configuration(
-        self,
-        start_configuration_left: JointConfigurationType,
-        start_configuration_right: JointConfigurationType,
-        goal_configuration_left: JointConfigurationType | None,
-        goal_configuration_right: JointConfigurationType | None,
+            self,
+            start_configuration_left: JointConfigurationType,
+            start_configuration_right: JointConfigurationType,
+            goal_configuration_left: JointConfigurationType | None,
+            goal_configuration_right: JointConfigurationType | None,
     ) -> JointPathType:
         """Plan a path from a start configurations to a goal configurations.
 
@@ -83,10 +110,10 @@ class DualArmPlanner(abc.ABC):
         raise NotImplementedError("This planner has not implemented planning to joint configurations (yet).")
 
     def plan_to_tcp_pose(
-        self,
-        start_configuration_left: JointConfigurationType,
-        start_configuration_right: JointConfigurationType,
-        tcp_pose_left: HomogeneousMatrixType | None,
-        tcp_pose_right: HomogeneousMatrixType | None,
+            self,
+            start_configuration_left: JointConfigurationType,
+            start_configuration_right: JointConfigurationType,
+            tcp_pose_left: HomogeneousMatrixType | None,
+            tcp_pose_right: HomogeneousMatrixType | None,
     ) -> JointPathType:
         raise NotImplementedError("This planner has not implemented planning to TCP poses (yet).")
