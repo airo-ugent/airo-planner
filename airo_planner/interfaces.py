@@ -39,7 +39,7 @@ class SingleArmPlanner(abc.ABC):
     """
 
     def plan_to_joint_configuration(
-            self, start_configuration: JointConfigurationType, goal_configuration: JointConfigurationType
+        self, start_configuration: JointConfigurationType, goal_configuration: JointConfigurationType
     ) -> JointPathType:
         """Plan a path from a start configuration to a goal configuration.
 
@@ -62,7 +62,7 @@ class SingleArmPlanner(abc.ABC):
         raise NotImplementedError("This planner has not implemented planning to joint configurations (yet).")
 
     def plan_to_tcp_pose(
-            self, start_configuration: JointConfigurationType, tcp_pose: HomogeneousMatrixType
+        self, start_configuration: JointConfigurationType, tcp_pose: HomogeneousMatrixType
     ) -> JointPathType:
         raise NotImplementedError("This planner has not implemented planning to TCP poses (yet).")
 
@@ -76,11 +76,11 @@ class DualArmPlanner(abc.ABC):
     """
 
     def plan_to_joint_configuration(
-            self,
-            start_configuration_left: JointConfigurationType,
-            start_configuration_right: JointConfigurationType,
-            goal_configuration_left: JointConfigurationType | None,
-            goal_configuration_right: JointConfigurationType | None,
+        self,
+        start_configuration_left: JointConfigurationType,
+        start_configuration_right: JointConfigurationType,
+        goal_configuration_left: JointConfigurationType | None,
+        goal_configuration_right: JointConfigurationType | None,
     ) -> JointPathType:
         """Plan a path from a start configurations to a goal configurations.
 
@@ -110,10 +110,10 @@ class DualArmPlanner(abc.ABC):
         raise NotImplementedError("This planner has not implemented planning to joint configurations (yet).")
 
     def plan_to_tcp_pose(
-            self,
-            start_configuration_left: JointConfigurationType,
-            start_configuration_right: JointConfigurationType,
-            tcp_pose_left: HomogeneousMatrixType | None,
-            tcp_pose_right: HomogeneousMatrixType | None,
+        self,
+        start_configuration_left: JointConfigurationType,
+        start_configuration_right: JointConfigurationType,
+        tcp_pose_left: HomogeneousMatrixType | None,
+        tcp_pose_right: HomogeneousMatrixType | None,
     ) -> JointPathType:
         raise NotImplementedError("This planner has not implemented planning to TCP poses (yet).")

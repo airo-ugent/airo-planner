@@ -55,20 +55,23 @@ from airo_planner.function_conversions import (
     convert_dual_arm_path_chooser_to_single_arm,
 )
 
-from airo_planner.interfaces import DualArmPlanner, SingleArmPlanner
+from airo_planner.interfaces import DualArmPlanner, SingleArmPlanner, MobilePlatformPlanner
 
 from airo_planner.ompl.single_arm_ompl_planner import SingleArmOmplPlanner
 from airo_planner.ompl.dual_arm_ompl_planner import DualArmOmplPlanner
+from airo_planner.ompl.mobile_platform_ompl_planner import MobilePlatformOmplPlanner
 
 
 __all__ = [
     "SingleArmPlanner",
     "DualArmPlanner",
+    "MobilePlatformPlanner",
     "MultipleGoalPlanner",
     "JointConfigurationsModifierType",
     "JointPathChooserType",
     "SingleArmOmplPlanner",
     "DualArmOmplPlanner",
+    "MobilePlatformOmplPlanner",
     "JointBoundsType",
     "is_within_bounds",
     "uniform_symmetric_joint_bounds",

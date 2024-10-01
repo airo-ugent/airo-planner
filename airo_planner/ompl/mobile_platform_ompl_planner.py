@@ -1,8 +1,8 @@
 import numpy as np
-from airo_typing import Vector3DType, JointPathType, JointConfigurationCheckerType
+from airo_typing import JointConfigurationCheckerType, JointPathType, Vector3DType
 from loguru import logger
 
-from airo_planner import create_simple_setup, state_to_ompl, NoPathFoundError, solve_and_smooth_path
+from airo_planner import NoPathFoundError, create_simple_setup, solve_and_smooth_path, state_to_ompl
 from airo_planner.interfaces import MobilePlatformPlanner
 
 
@@ -17,13 +17,11 @@ class MobilePlatformOmplPlanner(MobilePlatformPlanner):
     """
 
     def __init__(self, is_state_valid_fn: JointConfigurationCheckerType):
-        # TODO: JointConfigurationCheckerType is not ideal here, should be a new type.
+        # TODO: JointConfigurationCheckerType is not ideal here, should be a new type or rename this type?
         self.is_state_valid_fn = is_state_valid_fn
 
-        joint_bounds = (
-            np.full(3, -np.inf),
-            np.full(3, np.inf),
-        )
+        # TODO: Allow user to set these bounds.
+        joint_bounds = (np.array([-10.0, -10.0, -4 * np.pi]), np.array([10.0, 10.0, 4 * np.pi]))
         self._simple_setup = create_simple_setup(self.is_state_valid_fn, joint_bounds)
 
     def plan_to_pose(self, start_pose: Vector3DType, goal_pose: Vector3DType) -> JointPathType:
