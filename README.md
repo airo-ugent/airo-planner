@@ -30,7 +30,7 @@ Python package for single and dual robot arm motion planning.
 
 
 ## Getting started 🚀
-Complete the [Installation 🔧](#installation-🔧) and then see 🚧 **Coming soon:** `01_getting_started.ipynb`, where we set up:
+Complete the [Installation 🔧](#installation-🔧) and then see the getting started [notebooks](notebooks), where we set up:
 * 🎲 [OMPL](https://ompl.kavrakilab.org/) for sampling-based motion planning
 * 🐉 [Drake](https://drake.mit.edu/) for collision checking
 * 🧮 [ur-analytic-ik](https://github.com/Victorlouisdg/ur-analytic-ik) for inverse kinematics of a UR5e
