@@ -16,9 +16,12 @@ class MobilePlatformOmplPlanner(MobilePlatformPlanner):
     This can be useful for benchmarking with the OMPL benchmarking tools.
     """
 
-    def __init__(self, is_state_valid_fn: JointConfigurationCheckerType):
+    def __init__(self, is_state_valid_fn: JointConfigurationCheckerType, allowed_planning_time: float = 1.0):
         # TODO: JointConfigurationCheckerType is not ideal here, should be a new type or rename this type?
         self.is_state_valid_fn = is_state_valid_fn
+
+        # Planning options
+        self.allowed_planning_time = allowed_planning_time
 
         # TODO: Allow user to set these bounds.
         joint_bounds = (np.array([-10.0, -10.0, -4 * np.pi]), np.array([10.0, 10.0, 4 * np.pi]))
@@ -32,7 +35,7 @@ class MobilePlatformOmplPlanner(MobilePlatformPlanner):
         goal_state = state_to_ompl(goal_pose, space)
         self._simple_setup.setStartAndGoalStates(start_state, goal_state)
 
-        path = solve_and_smooth_path(self._simple_setup)
+        path = solve_and_smooth_path(self._simple_setup, self.allowed_planning_time)
 
         if path is None:
             raise NoPathFoundError(start_pose, goal_pose)

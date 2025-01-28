@@ -84,11 +84,11 @@ def create_simple_setup(
     return simple_setup
 
 
-def solve_and_smooth_path(simple_setup: og.SimpleSetup) -> JointPathType | None:
+def solve_and_smooth_path(simple_setup: og.SimpleSetup, allowed_planning_time: float = 1.0) -> JointPathType | None:
     # Should be called after start and goal have been set
 
     # Run planning algorithm
-    simple_setup.solve()
+    simple_setup.solve(allowed_planning_time)
 
     if not simple_setup.haveExactSolutionPath():
         return None
