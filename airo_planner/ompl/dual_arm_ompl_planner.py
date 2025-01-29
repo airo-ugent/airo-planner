@@ -42,9 +42,9 @@ class DualArmOmplPlanner(DualArmPlanner, MultipleGoalPlanner):
         choose_path_fn: JointPathChooserType = choose_shortest_path,
         degrees_of_freedom_left: int = 6,
         degrees_of_freedom_right: int = 6,
-        allowed_planning_time: float = 1.0
+        allowed_planning_time: float = 1.0,
     ):
-        
+
         # Planner properties
         self.is_state_valid_fn = is_state_valid_fn
         self.inverse_kinematics_left_fn = inverse_kinematics_left_fn
