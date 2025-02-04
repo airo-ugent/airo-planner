@@ -49,6 +49,7 @@ class SingleArmOmplPlanner(SingleArmPlanner, MultipleGoalPlanner):
         rank_goal_configurations_fn: JointConfigurationsModifierType | None = None,
         choose_path_fn: JointPathChooserType = choose_shortest_path,
         degrees_of_freedom: int = 6,
+        allowed_planning_time: float = 1.0,
     ):
         """Instiatiate a single-arm motion planner that uses OMPL. This creates
         a SimpleSetup object. Note that planning to TCP poses is only possible
@@ -68,6 +69,7 @@ class SingleArmOmplPlanner(SingleArmPlanner, MultipleGoalPlanner):
         self.inverse_kinematics_fn = inverse_kinematics_fn
 
         # Planning parameters
+        self.allowed_planning_time = allowed_planning_time
         self._degrees_of_freedom = degrees_of_freedom
         if joint_bounds is None:
             self.joint_bounds = uniform_symmetric_joint_bounds(self._degrees_of_freedom)
@@ -119,7 +121,7 @@ class SingleArmOmplPlanner(SingleArmPlanner, MultipleGoalPlanner):
         self._set_start_and_goal_configurations(start_configuration, goal_configuration)
         simple_setup = self._simple_setup
 
-        path = solve_and_smooth_path(simple_setup)
+        path = solve_and_smooth_path(simple_setup, self.allowed_planning_time)
 
         if path is None:
             raise NoPathFoundError(start_configuration, goal_configuration)
