@@ -46,13 +46,12 @@ pip install airo-planner
 
 We depend on `ompl` with its Python bindings, which are not available on PyPI yet. The easiest way to install this for now is to use a pre-release wheel fom their [Github](https://github.com/ompl/ompl/releases):
 ```
-pip install https://github.com/ompl/ompl/releases/download/prerelease/ompl-1.6.0-cp310-cp310-manylinux_2_28_x86_64.whl
+wget https://github.com/ompl/ompl/releases/download/1.7.0/wheels-ubuntu-latest-x86_64.zip
+unzip wheels-ubuntu-latest-x86_64.zip && rm wheels-ubuntu-latest-x86_64.zip
+pip install https://github.com/ompl/ompl/releases/download/prerelease/ompl-1.7.0-cp310-cp310-manylinux_2_28_x86_64.whl
 ```
 
-For Python 3.11:
-```
-pip install https://github.com/ompl/ompl/releases/download/prerelease/ompl-1.6.0-cp311-cp311-manylinux_2_28_x86_64.whl
-```
+(Replace `cp310` with your Python version, e.g. `cp311` for Python 3.11)
 
 ## Developer guide 🛠️
 See the [`airo-mono`](https://github.com/airo-ugent/airo-mono) developer guide.
