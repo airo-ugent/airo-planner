@@ -2,7 +2,7 @@
 Python package for single and dual robot arm motion planning.
 
 **Key motivation:**
-  - 🔗 **Bridge** the gap between [**OMPL**](https://ompl.kavrakilab.org/)'s powerful (but robot-agnostic) sampling-based planners and [**Drake**](https://drake.mit.edu/)'s collision checking for robots.
+  - 🔗 **Provide unified interfaces** for different motion planners and collision checkers, such as [**OMPL**](https://ompl.kavrakilab.org/)'s powerful (but robot-agnostic) sampling-based planners and [**Drake**](https://drake.mit.edu/)'s collision checking for robots.
   - 🦾 **Standardize** and add other features taylored to robotic arm motion planning such as joint limits and planning to TCP poses.
 
 ## Overview 🧾
@@ -24,13 +24,13 @@ Python package for single and dual robot arm motion planning.
 
   - 🧪 **Enable experimentation:** Facilitate the benchmarking and exploration of experimental planning algorithms.
 
-
-🗓️ **Planned features:**
-  - 🎯 Drake optimization-based planning
+**Planned features:**
+  - Drake optimization-based planning
+  - Nvidia cuRobo-based planning
 
 
 ## Getting started 🚀
-Complete the [Installation 🔧](#installation-🔧) and then see the getting started [notebooks](notebooks), where we set up:
+See the getting started [notebooks](notebooks), where we set up:
 * 🎲 [OMPL](https://ompl.kavrakilab.org/) for sampling-based motion planning
 * 🐉 [Drake](https://drake.mit.edu/) for collision checking
 * 🧮 [ur-analytic-ik](https://github.com/Victorlouisdg/ur-analytic-ik) for inverse kinematics of a UR5e
@@ -42,16 +42,10 @@ Complete the [Installation 🔧](#installation-🔧) and then see the getting st
 pip install airo-planner
 ```
 
-**🚧 Important post-installation step**
-
-We depend on `ompl` with its Python bindings, which are not available on PyPI yet. The easiest way to install this for now is to use a pre-release wheel fom their [Github](https://github.com/ompl/ompl/releases):
+We add underlying motion planning libraries as optional dependencies. For example, to install `OMPL` alongside `airo-planner`:
 ```
-wget https://github.com/ompl/ompl/releases/download/1.7.0/wheels-ubuntu-latest-x86_64.zip
-unzip wheels-ubuntu-latest-x86_64.zip && rm wheels-ubuntu-latest-x86_64.zip
-pip install https://github.com/ompl/ompl/releases/download/prerelease/ompl-1.7.0-cp310-cp310-manylinux_2_28_x86_64.whl
+pip install airo-planner[ompl]
 ```
-
-(Replace `cp310` with your Python version, e.g. `cp311` for Python 3.11)
 
 ## Developer guide 🛠️
 See the [`airo-mono`](https://github.com/airo-ugent/airo-mono) developer guide.
