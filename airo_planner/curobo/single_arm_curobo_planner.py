@@ -9,6 +9,7 @@ from curobo.types.math import Pose
 from curobo.types.robot import JointState
 from curobo.wrap.reacher.motion_gen import MotionGen, MotionGenConfig, MotionGenPlanConfig
 from loguru import logger
+from scipy.spatial.transform import Rotation as R
 
 from airo_planner import NoPathFoundError, SingleArmPlanner
 
@@ -53,8 +54,10 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
             num_graph_seeds=10,
         )
 
+        logger.debug("Creating MotionGen instance...")
         self.motion_gen = MotionGen(self.motion_gen_config)
         self.motion_gen.optimize_dt = False
+        logger.debug("Warming up MotionGen instance...")
         self.motion_gen.warmup()
 
     def plan_to_joint_configuration(
@@ -72,6 +75,8 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         if not result.success:
             logger.warning(f"Failed to plan with status: {result.status}")
             raise NoPathFoundError(start_configuration, goal_configuration)
+
+        logger.debug(f"Planning took {result.total_time} seconds.")
 
         path = result.interpolated_plan.position.cpu().numpy()
 
@@ -96,6 +101,8 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
             logger.warning(f"Failed to plan with status: {result.status}")
             raise NoPathFoundError(start_configuration, tcp_pose)
 
+        logger.debug(f"Planning took {result.total_time} seconds.")
+
         path = result.interpolated_plan.position.cpu().numpy()
 
         logger.success(f"Successfully found path (with {len(path)} waypoints).")
@@ -104,3 +111,16 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         times = np.arange(len(path)) * dt
 
         return SingleArmTrajectory(times, JointPathContainer(positions=path))
+
+    def forward_kinematics(self, q: JointConfigurationType) -> HomogeneousMatrixType:
+        crms = self.motion_gen.kinematics.get_state(torch.tensor(q, dtype=torch.float32).cuda())
+        tcp_pose = np.eye(4)
+        tcp_pose[:3, 3] = crms.ee_position.cpu().numpy()
+        tcp_pose[:3, :3] = R.from_quat(crms.ee_quaternion.cpu().numpy(), scalar_first=True).as_matrix()
+        return tcp_pose
+
+    def inverse_kinematics(self, X_B_Tcp: HomogeneousMatrixType) -> JointConfigurationType:
+        goal = Pose.from_matrix(X_B_Tcp)
+        result = self.motion_gen.ik_solver.solve_single(goal)
+        q_solution = result.solution[result.success]
+        return q_solution
