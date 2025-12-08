@@ -13,6 +13,7 @@ Python package for single and dual robot arm motion planning.
     - `DualArmPlanner`
   - 🔌 **Implementations:** reliable and well-tested implementations of these interfaces.
     - OMPL for single and dual arm planning to joint configurations or TCP poses
+    - cuRobo for single arm planning to joint configurations or TCP poses
 
 **Design goals:**
   - ⚓ **Robustness and stability:** provide an *off-the-shelf* motion planner that supports research by reliably covering most (not *all*) use cases at our labs, prioritizing dependability over niche, cutting-edge features.
@@ -26,7 +27,6 @@ Python package for single and dual robot arm motion planning.
 
 **Planned features:**
   - Drake optimization-based planning
-  - Nvidia cuRobo-based planning
 
 
 ## Getting started 🚀
@@ -37,14 +37,13 @@ See the getting started [notebooks](notebooks), where we set up:
 
 
 ## Installation 🔧
+### Dependencies
+If you want to use cuRobo with `airo-planner`, you first need to install it according to [these instructions](https://curobo.org/get_started/1_install_instructions.html). Note that you will need a CUDA-enabled GPU.
+
+### Installing `airo-planner`
 `airo-planner` is available on PyPI and installable with pip:
 ```
 pip install airo-planner
-```
-
-We add underlying motion planning libraries as optional dependencies. For example, to install `OMPL` alongside `airo-planner`:
-```
-pip install airo-planner[ompl]
 ```
 
 ## Developer guide 🛠️

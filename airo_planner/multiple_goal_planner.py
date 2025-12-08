@@ -153,7 +153,7 @@ class MultipleGoalPlanner(abc.ABC):
         ik_solutions_filtered = self._filter_ik_solutions(ik_solutions_valid)
         ik_solutions_ranked = self._rank_ik_solutions(ik_solutions_filtered)
 
-        logger.info(f"Running OMPL towards {len(ik_solutions_ranked)} IK solutions.")
+        logger.info(f"Running motion planning towards {len(ik_solutions_ranked)} IK solutions.")
 
         return_first_success = True if self.rank_goal_configurations_fn is not None else False
 
