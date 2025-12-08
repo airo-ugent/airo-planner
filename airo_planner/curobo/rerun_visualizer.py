@@ -6,7 +6,9 @@ from typing import List
 
 import airo_models
 import numpy as np
+import torch
 from airo_typing import JointConfigurationType
+from curobo.cuda_robot_model.cuda_robot_model import CudaRobotModel
 from curobo.geom.types import Cuboid, Sphere, WorldConfig
 from loguru import logger
 from yourdfpy import URDF
@@ -80,7 +82,11 @@ class CuRoboRerunVisualizer:
         rr.log(
             "/world/cuboids",
             rr.Boxes3D(
-                centers=centers, half_sizes=half_sizes, quaternions=quaternions, fill_mode=rr.components.FillMode.Solid
+                centers=centers,
+                half_sizes=half_sizes,
+                quaternions=quaternions,
+                fill_mode=rr.components.FillMode.Solid,
+                colors=[(100, 100, 100)] * len(centers),
             ),
         )
 
@@ -93,3 +99,19 @@ class CuRoboRerunVisualizer:
                 + self._robot_joint_paths[joint_name],
                 rr.Transform3D(rotation=RotationAxisAngle(axis=joint_axis, angle=joint_angle)),
             )
+
+    def log_robot_collision_spheres(self, kinematics: CudaRobotModel, q: JointConfigurationType):
+        spheres = kinematics.get_robot_as_spheres(torch.tensor(q, dtype=torch.float32).cuda())[0]
+
+        centers = [sphere.pose[:3] for sphere in spheres]
+        half_sizes = [[sphere.radius, sphere.radius, sphere.radius] for sphere in spheres]
+
+        rr.log(
+            f"/{self.robot_name}/collision_spheres",
+            rr.Ellipsoids3D(
+                centers=centers,
+                half_sizes=half_sizes,
+                fill_mode=rr.components.FillMode.MajorWireframe,
+                colors=[(255, 0, 0)] * len(spheres),
+            ),
+        )
