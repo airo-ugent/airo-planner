@@ -24,11 +24,17 @@ dependencies = [
     "airo-typing>=2025.11.0",
     "loguru>=0.7.3",
     "ompl>=1.7.0",
+    "yourdfpy>=0.0.58",
 ]
 
 [project.urls]
 Homepage = "https://github.com/airo-ugent/airo-planner"
 Issues = "https://github.com/airo-ugent/airo-planner/issues"
+
+[project.optional-dependencies]
+rerun = [
+    "rerun-sdk>=0.27.2",
+]
 
 [dependency-groups]
 dev = [

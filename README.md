@@ -46,6 +46,11 @@ If you want to use cuRobo with `airo-planner`, you first need to install it acco
 pip install airo-planner
 ```
 
+For visualization of cuRobo worlds (see `notebooks/06_curobo.ipynb`), you can use the optional `rerun` dependency.
+```
+pip install airo-planner[rerun]
+```
+
 ## Developer guide 🛠️
 See the [`airo-mono`](https://github.com/airo-ugent/airo-mono) developer guide.
 A very similar process and tools are used for this package.

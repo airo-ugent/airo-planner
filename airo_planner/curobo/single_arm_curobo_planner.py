@@ -1,9 +1,11 @@
 from os import PathLike
+from typing import List
 
 import numpy as np
 import torch
 from airo_typing import HomogeneousMatrixType, JointConfigurationType, JointPathContainer, SingleArmTrajectory
 from curobo.geom.sdf.world import CollisionCheckerType
+from curobo.geom.types import Cuboid
 from curobo.types.base import TensorDeviceType
 from curobo.types.math import Pose
 from curobo.types.robot import JointState
@@ -124,3 +126,12 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         result = self.motion_gen.ik_solver.solve_single(goal)
         q_solution = result.solution[result.success]
         return q_solution
+
+    def get_collider_cuboids(self) -> List[Cuboid]:
+        return self.motion_gen.world_model.cuboid
+
+    def set_collider_cuboids(self, cuboids: List[Cuboid]) -> None:
+        self.motion_gen.world_model.cuboid = []
+        for cuboid in cuboids:
+            self.motion_gen.world_model.add_obstacle(cuboid)
+        self.motion_gen.update_world(self.motion_gen.world_model)
