@@ -56,6 +56,16 @@ For visualization of cuRobo worlds (see `notebooks/06_curobo.ipynb`), you can us
 pip install airo-planner[rerun]
 ```
 
+### Custom robots with cuRobo
+You can use the [official cuRobo instructions](https://curobo.org/tutorials/1_robot_configuration.html#tutorial-with-a-ur5e-robot) to configure a new robot, but this requires Isaac Sim. An easier method is to fill in a YAML file with the output of `bubblify`.
+
+```
+pip install bubblify
+bubblify --urdf_path /path/to/urdf --show_collision
+```
+
+Copy the `collision_spheres` section to the YAML file of your robot, and you are ready to use your own robot!
+
 ## Developer guide 🛠️
 See the [`airo-mono`](https://github.com/airo-ugent/airo-mono) developer guide.
 A very similar process and tools are used for this package.
