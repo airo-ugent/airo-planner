@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "airo-planner"
-version = "0.0.4"
+version = "0.0.5"
 authors = [
   { name = "Andreas Verleysen", email = "andreas.verleysen@ugent.be" },
   { name = "Victor-Louis De Gusseme", email = "victorlouisdg@gmail.com" },
