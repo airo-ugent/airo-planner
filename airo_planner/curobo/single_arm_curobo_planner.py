@@ -85,6 +85,12 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
 
         return SingleArmTrajectory(times, JointPathContainer(positions=path))
 
+    def plan_to_joint_configurations_batched(
+        self, start_configurations: List[JointConfigurationType], goal_configurations: List[JointConfigurationType]
+    ) -> List[SingleArmTrajectory]:
+        goal_tcp_poses = [self.forward_kinematics(q) for q in goal_configurations]
+        return self.plan_to_tcp_poses_batched(start_configurations, goal_tcp_poses)
+
     def plan_to_tcp_pose(
         self, start_configuration: JointConfigurationType, tcp_pose: HomogeneousMatrixType
     ) -> SingleArmTrajectory:
