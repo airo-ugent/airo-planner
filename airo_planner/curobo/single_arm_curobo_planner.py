@@ -55,8 +55,23 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         logger.debug("Warming up MotionGen instance...")
         self.motion_gen.warmup()
 
+    def set_time_dilation_factor(self, factor: float) -> None:
+        """Set the time dilation factor (to a value smaller than or equal to 1) to reduce trajectory velocities.
+        Batched planning requires that the time dilation factor is None.
+
+        Args:
+            factor: The time dilation factor (<= 1.0).
+
+        Raises:
+            ValueError: If the time dilation factor is too large."""
+        if factor is not None and factor > 1.0:
+            raise ValueError("Time dilation factor should be smaller than or equal to 1.")
+        self.motion_gen_plan_config.time_dilation_factor = factor
+
     def plan_to_joint_configuration(
-        self, start_configuration: JointConfigurationType, goal_configuration: JointConfigurationType
+        self,
+        start_configuration: JointConfigurationType,
+        goal_configuration: JointConfigurationType,
     ) -> SingleArmTrajectory:
         """Plan a collision-free trajectory between two joint configurations.
 
@@ -104,7 +119,12 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
 
         Returns:
             A list of SingleArmTrajectory objects. Empty if planning fails.
+
+        Raises:
+            ValueError: If the time dilation factor is not `None`. This is not supported.
         """
+        if self.motion_gen_plan_config.time_dilation_factor is not None:
+            raise ValueError("The time dilation factor should be None for batched planning.")
         goal_tcp_poses = [self.forward_kinematics(q) for q in goal_configurations]
         return self.plan_to_tcp_poses_batched(start_configurations, goal_tcp_poses)
 
@@ -155,7 +175,12 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
 
         Returns:
             List of SingleArmTrajectory objects for each successful plan.
+
+        Raises:
+            ValueError: If the time dilation factor is not `None`. This is not supported.
         """
+        if self.motion_gen_plan_config.time_dilation_factor is not None:
+            raise ValueError("The time dilation factor should be None for batched planning.")
         start_states = JointState.from_position(
             torch.tensor(np.stack(start_configurations), dtype=torch.float32).cuda()
         )
