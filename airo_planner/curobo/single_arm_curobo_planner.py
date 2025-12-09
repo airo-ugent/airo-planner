@@ -1,10 +1,10 @@
+import os
 from os import PathLike
 from typing import List
 
 import numpy as np
 import torch
 from airo_typing import HomogeneousMatrixType, JointConfigurationType, JointPathContainer, SingleArmTrajectory
-from curobo.geom.sdf.world import CollisionCheckerType
 from curobo.geom.types import Cuboid
 from curobo.types.base import TensorDeviceType
 from curobo.types.math import Pose
@@ -34,28 +34,24 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
             curobo_world_file: Path to the environment/world YAML file containing obstacles.
             allowed_planning_time: Maximum allowed planning duration in seconds.
         """
+
+        os.environ["CUROBO_TORCH_CUDA_GRAPH_RESET"] = "1"  # Required for batch planning.
+
         self.tensor_args = TensorDeviceType()
 
         self.motion_gen_config = MotionGenConfig.load_from_robot_config(
             curobo_robot_file,
             curobo_world_file,
             self.tensor_args,
-            collision_checker_type=CollisionCheckerType.MESH,
-            use_cuda_graph=False,
+            collision_cache={"obb": 100},
         )
 
         self.motion_gen_plan_config = MotionGenPlanConfig(
-            timeout=allowed_planning_time,
-            enable_graph=False,
-            enable_opt=True,
-            max_attempts=1,
-            num_trajopt_seeds=10,
-            num_graph_seeds=10,
+            timeout=allowed_planning_time, num_graph_seeds=1  # Required for batch planning.
         )
 
         logger.debug("Creating MotionGen instance...")
         self.motion_gen = MotionGen(self.motion_gen_config)
-        self.motion_gen.optimize_dt = False
         logger.debug("Warming up MotionGen instance...")
         self.motion_gen.warmup()
 
@@ -168,6 +164,8 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         )
 
         result = self.motion_gen.plan_batch(start_states, goal_states, self.motion_gen_plan_config)
+
+        logger.debug(f"Planning took {result.total_time} seconds.")
 
         trajectories = []
         if torch.all(result.success):
