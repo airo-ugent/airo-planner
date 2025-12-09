@@ -27,12 +27,12 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         curobo_world_file: PathLike,
         allowed_planning_time: float = 1.0,
     ):
-        """Instiatiate a single-arm motion planner that uses cuRobo.
+        """Instantiate a single-arm motion planner using cuRobo.
 
         Args:
-            curobo_robot_file: Path to the robot YAML file.
-            curobo_world_file: Path to the environment (world) YAML file.
-            allowed_planning_time: Maximum planning time in seconds.
+            curobo_robot_file: Path to the robot YAML file defining kinematics and limits.
+            curobo_world_file: Path to the environment/world YAML file containing obstacles.
+            allowed_planning_time: Maximum allowed planning duration in seconds.
         """
         self.tensor_args = TensorDeviceType()
 
@@ -62,6 +62,18 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
     def plan_to_joint_configuration(
         self, start_configuration: JointConfigurationType, goal_configuration: JointConfigurationType
     ) -> SingleArmTrajectory:
+        """Plan a collision-free trajectory between two joint configurations.
+
+        Args:
+            start_configuration: Starting robot joint vector.
+            goal_configuration: Desired target joint vector.
+
+        Returns:
+            A SingleArmTrajectory containing timestamps and joint positions.
+
+        Raises:
+            NoPathFoundError: If planning is unsuccessful.
+        """
         start_state = JointState.from_position(
             torch.tensor(start_configuration, dtype=torch.float32)[None, :].cuda().contiguous()
         )
@@ -88,12 +100,33 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
     def plan_to_joint_configurations_batched(
         self, start_configurations: List[JointConfigurationType], goal_configurations: List[JointConfigurationType]
     ) -> List[SingleArmTrajectory]:
+        """Batch-plan from joint-space starts to joint-space goals. If any failures to plan occur, this function returns an empty list.
+
+        Args:
+            start_configurations: List of start joint vectors.
+            goal_configurations: List of goal joint vectors.
+
+        Returns:
+            A list of SingleArmTrajectory objects. Empty if planning fails.
+        """
         goal_tcp_poses = [self.forward_kinematics(q) for q in goal_configurations]
         return self.plan_to_tcp_poses_batched(start_configurations, goal_tcp_poses)
 
     def plan_to_tcp_pose(
         self, start_configuration: JointConfigurationType, tcp_pose: HomogeneousMatrixType
     ) -> SingleArmTrajectory:
+        """Plan a motion from a joint configuration to a Cartesian TCP pose.
+
+        Args:
+            start_configuration: Initial joint configuration.
+            tcp_pose: Desired end-effector homogeneous transform (4x4).
+
+        Returns:
+            A computed joint trajectory reaching the target TCP pose.
+
+        Raises:
+            NoPathFoundError: If planning fails.
+        """
         start_state = JointState.from_position(
             torch.tensor(start_configuration, dtype=torch.float32)[None, :].cuda().contiguous()
         )
@@ -118,6 +151,15 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
     def plan_to_tcp_poses_batched(
         self, start_configurations: List[JointConfigurationType], tcp_poses: List[HomogeneousMatrixType]
     ) -> List[SingleArmTrajectory]:
+        """Batch-plan from joint-space starts to Cartesian-space targets. If any failures to plan occur, this function returns an empty list.
+
+        Args:
+            start_configurations: List of starting joint configurations.
+            tcp_poses: List of 4x4 end-effector target poses.
+
+        Returns:
+            List of SingleArmTrajectory objects for each successful plan.
+        """
         start_states = JointState.from_position(
             torch.tensor(np.stack(start_configurations), dtype=torch.float32).cuda()
         )
@@ -140,6 +182,14 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         return trajectories
 
     def forward_kinematics(self, q: JointConfigurationType) -> HomogeneousMatrixType:
+        """Compute forward kinematics for a joint configuration.
+
+        Args:
+            q: Joint vector.
+
+        Returns:
+            A 4x4 homogeneous transform representing the TCP pose.
+        """
         crms = self.motion_gen.kinematics.get_state(torch.tensor(q, dtype=torch.float32).cuda())
         tcp_pose = np.eye(4)
         tcp_pose[:3, 3] = crms.ee_position.cpu().numpy()
@@ -147,17 +197,38 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         return tcp_pose
 
     def inverse_kinematics(self, X_B_Tcp: HomogeneousMatrixType) -> JointConfigurationType:
+        """Compute inverse kinematics for a desired TCP pose.
+
+        Args:
+            X_B_Tcp: Target TCP pose as a 4x4 transform.
+
+        Returns:
+            A joint configuration that reaches the target pose.
+        """
         goal = Pose.from_matrix(X_B_Tcp)
         result = self.motion_gen.ik_solver.solve_single(goal)
         q_solution = result.solution[result.success]
         return q_solution
 
     def add_collider_cuboid(self, cuboid: Cuboid, update_world: bool = True) -> None:
+        """Add a cuboid obstacle to the world model.
+
+        Args:
+            cuboid: The Cuboid object to add.
+            update_world: If True, updates cuRobo's internal world model.
+        """
         self.motion_gen.world_model.cuboid.append(cuboid)
         if update_world:
             self.update_world()
 
     def update_collider_cuboid(self, name: str, new_cuboid: Cuboid, update_world: bool = True) -> None:
+        """Replace an existing cuboid collider with a new one.
+
+        Args:
+            name: Name of the cuboid to update.
+            new_cuboid: Replacement cuboid.
+            update_world: Whether to refresh cuRobo's world model.
+        """
         for i, cuboid in enumerate(self.motion_gen.world_model.cuboid):
             if name == cuboid.name:
                 self.motion_gen.world_model.cuboid[i] = new_cuboid
@@ -166,9 +237,20 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
             self.update_world()
 
     def get_collider_cuboids(self) -> List[Cuboid]:
+        """Return all cuboid obstacles currently in the world model.
+
+        Returns:
+            List of Cuboid objects.
+        """
         return self.motion_gen.world_model.cuboid
 
     def set_collider_cuboids(self, cuboids: List[Cuboid], update_world: bool = True) -> None:
+        """Replace all cuboid obstacles in the world model.
+
+        Args:
+            cuboids: New list of cuboid obstacles.
+            update_world: Whether to refresh the cuRobo world model.
+        """
         self.motion_gen.world_model.cuboid = []
         for cuboid in cuboids:
             self.motion_gen.world_model.add_obstacle(cuboid)
@@ -176,4 +258,5 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
             self.update_world()
 
     def update_world(self) -> None:
+        """Synchronize cuRobo's world model to apply any obstacle changes."""
         self.motion_gen.update_world(self.motion_gen.world_model)
