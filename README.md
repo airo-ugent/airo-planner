@@ -34,6 +34,11 @@ See the getting started [notebooks](notebooks), where we set up:
 * 🎲 [OMPL](https://ompl.kavrakilab.org/) for sampling-based motion planning
 * 🐉 [Drake](https://drake.mit.edu/) for collision checking
 * 🧮 [ur-analytic-ik](https://github.com/Victorlouisdg/ur-analytic-ik) for inverse kinematics of a UR5e
+* 🟢 [cuRobo](https://curobo.org/) for GPU-accelerated motion planning
+
+
+### Which planner should I use?
+If you have mostly static scenes, use OMPL. It’s well tested, fast, and runs on your CPU. If you have dynamic scenes that change often and have access to a CUDA-supporting GPU, use cuRobo.
 
 
 ## Installation 🔧

@@ -17,11 +17,8 @@ from airo_planner import NoPathFoundError, SingleArmPlanner
 
 
 class SingleArmCuroboPlanner(SingleArmPlanner):
-    """Utility class for single-arm motion planning using Curobo.
-
-    This class only plans in joint space.
-
-    The purpose of this class is to make working with Curobo easier.
+    """Utility class for single-arm motion planning using cuRobo.
+    The purpose of this class is to make working with cuRobo easier.
     """
 
     def __init__(
@@ -30,19 +27,19 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         curobo_world_file: PathLike,
         allowed_planning_time: float = 1.0,
     ):
-        """Instiatiate a single-arm motion planner that uses Curobo.
+        """Instiatiate a single-arm motion planner that uses cuRobo.
 
         Args:
             curobo_robot_file: Path to the robot YAML file.
             curobo_world_file: Path to the environment (world) YAML file.
             allowed_planning_time: Maximum planning time in seconds.
         """
-        tensor_args = TensorDeviceType()
+        self.tensor_args = TensorDeviceType()
 
         self.motion_gen_config = MotionGenConfig.load_from_robot_config(
             curobo_robot_file,
             curobo_world_file,
-            tensor_args,
+            self.tensor_args,
             collision_checker_type=CollisionCheckerType.MESH,
             use_cuda_graph=False,
         )
@@ -80,12 +77,11 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
 
         logger.debug(f"Planning took {result.total_time} seconds.")
 
-        path = result.interpolated_plan.position.cpu().numpy()
+        path = result.optimized_plan.position.cpu().numpy()
 
         logger.success(f"Successfully found path (with {len(path)} waypoints).")
 
-        dt = result.interpolation_dt
-        times = np.arange(len(path)) * dt
+        times = np.arange(len(path)) * result.optimized_dt.item()
 
         return SingleArmTrajectory(times, JointPathContainer(positions=path))
 
@@ -105,14 +101,37 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
 
         logger.debug(f"Planning took {result.total_time} seconds.")
 
-        path = result.interpolated_plan.position.cpu().numpy()
+        path = result.optimized_plan.position.cpu().numpy()
 
         logger.success(f"Successfully found path (with {len(path)} waypoints).")
 
-        dt = result.interpolation_dt
-        times = np.arange(len(path)) * dt
+        times = np.arange(len(path)) * result.optimized_dt.item()
 
         return SingleArmTrajectory(times, JointPathContainer(positions=path))
+
+    def plan_to_tcp_poses_batched(
+        self, start_configurations: List[JointConfigurationType], tcp_poses: List[HomogeneousMatrixType]
+    ) -> List[SingleArmTrajectory]:
+        start_states = JointState.from_position(
+            torch.tensor(np.stack(start_configurations), dtype=torch.float32).cuda()
+        )
+        goal_states = Pose.from_batch_list(
+            [Pose.from_matrix(tcp_pose).to_list() for tcp_pose in tcp_poses], self.tensor_args
+        )
+
+        result = self.motion_gen.plan_batch(start_states, goal_states, self.motion_gen_plan_config)
+
+        trajectories = []
+        if torch.all(result.success):
+            logger.success("Successfully planned to all goal states.")
+
+            for result_index in range(len(result.success)):
+                path = result.optimized_plan.position[result_index].cpu().numpy()
+                times = np.arange(len(path)) * result.optimized_dt[result_index].item()
+                trajectories.append(SingleArmTrajectory(times, JointPathContainer(positions=path)))
+        else:
+            logger.warning(f"Failed to plan with status: {result.status}.")
+        return trajectories
 
     def forward_kinematics(self, q: JointConfigurationType) -> HomogeneousMatrixType:
         crms = self.motion_gen.kinematics.get_state(torch.tensor(q, dtype=torch.float32).cuda())
@@ -127,11 +146,28 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         q_solution = result.solution[result.success]
         return q_solution
 
+    def add_collider_cuboid(self, cuboid: Cuboid, update_world: bool = True) -> None:
+        self.motion_gen.world_model.cuboid.append(cuboid)
+        if update_world:
+            self.update_world()
+
+    def update_collider_cuboid(self, name: str, new_cuboid: Cuboid, update_world: bool = True) -> None:
+        for i, cuboid in enumerate(self.motion_gen.world_model.cuboid):
+            if name == cuboid.name:
+                self.motion_gen.world_model.cuboid[i] = new_cuboid
+                break
+        if update_world:
+            self.update_world()
+
     def get_collider_cuboids(self) -> List[Cuboid]:
         return self.motion_gen.world_model.cuboid
 
-    def set_collider_cuboids(self, cuboids: List[Cuboid]) -> None:
+    def set_collider_cuboids(self, cuboids: List[Cuboid], update_world: bool = True) -> None:
         self.motion_gen.world_model.cuboid = []
         for cuboid in cuboids:
             self.motion_gen.world_model.add_obstacle(cuboid)
+        if update_world:
+            self.update_world()
+
+    def update_world(self) -> None:
         self.motion_gen.update_world(self.motion_gen.world_model)
