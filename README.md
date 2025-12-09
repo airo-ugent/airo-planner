@@ -13,6 +13,7 @@ Python package for single and dual robot arm motion planning.
     - `DualArmPlanner`
   - 🔌 **Implementations:** reliable and well-tested implementations of these interfaces.
     - OMPL for single and dual arm planning to joint configurations or TCP poses
+    - cuRobo for single arm planning to joint configurations or TCP poses
 
 **Design goals:**
   - ⚓ **Robustness and stability:** provide an *off-the-shelf* motion planner that supports research by reliably covering most (not *all*) use cases at our labs, prioritizing dependability over niche, cutting-edge features.
@@ -26,7 +27,6 @@ Python package for single and dual robot arm motion planning.
 
 **Planned features:**
   - Drake optimization-based planning
-  - Nvidia cuRobo-based planning
 
 
 ## Getting started 🚀
@@ -34,17 +34,26 @@ See the getting started [notebooks](notebooks), where we set up:
 * 🎲 [OMPL](https://ompl.kavrakilab.org/) for sampling-based motion planning
 * 🐉 [Drake](https://drake.mit.edu/) for collision checking
 * 🧮 [ur-analytic-ik](https://github.com/Victorlouisdg/ur-analytic-ik) for inverse kinematics of a UR5e
+* 🟢 [cuRobo](https://curobo.org/) for GPU-accelerated motion planning
+
+
+### Which planner should I use?
+If you have mostly static scenes, use OMPL. It’s well tested, fast, and runs on your CPU. If you have dynamic scenes that change often and have access to a CUDA-supporting GPU, use cuRobo.
 
 
 ## Installation 🔧
+### Dependencies
+If you want to use cuRobo with `airo-planner`, you first need to install it according to [these instructions](https://curobo.org/get_started/1_install_instructions.html). Note that you will need a CUDA-enabled GPU.
+
+### Installing `airo-planner`
 `airo-planner` is available on PyPI and installable with pip:
 ```
 pip install airo-planner
 ```
 
-We add underlying motion planning libraries as optional dependencies. For example, to install `OMPL` alongside `airo-planner`:
+For visualization of cuRobo worlds (see `notebooks/06_curobo.ipynb`), you can use the optional `rerun` dependency.
 ```
-pip install airo-planner[ompl]
+pip install airo-planner[rerun]
 ```
 
 ## Developer guide 🛠️

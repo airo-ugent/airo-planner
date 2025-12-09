@@ -43,7 +43,7 @@ class SingleArmPlanner(abc.ABC):
     ) -> JointPathType:
         """Plan a path from a start configuration to a goal configuration.
 
-        Note that this path is not guarenteed to be dense, i.e. the distance
+        Note that this path is not guaranteed to be dense, i.e. the distance
         between consecutive configurations in the path may be large. For this
         reason, you might need to post-process these path before executing it.
 
