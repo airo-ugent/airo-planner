@@ -13,9 +13,9 @@ def state_from_ompl(state: ob.State, n: int) -> np.ndarray:
 
 
 def state_to_ompl(state_numpy: np.ndarray, space: ob.StateSpace) -> ob.State:
-    state = ob.State(space)
+    state = space.allocState()
     for i in range(len(state_numpy)):
-        state()[i] = state_numpy[i]
+        state[i] = state_numpy[i]
     return state
 
 
@@ -67,7 +67,7 @@ def create_simple_setup(
 
     # Configure the SimpleSetup object
     simple_setup = og.SimpleSetup(space)
-    simple_setup.setStateValidityChecker(ob.StateValidityCheckerFn(is_state_valid_ompl))
+    simple_setup.setStateValidityChecker(is_state_valid_ompl)
 
     # Most planners don't need this, but we set it just in case you want to use an optimizing planner.
     simple_setup.setOptimizationObjective(ob.PathLengthOptimizationObjective(simple_setup.getSpaceInformation()))
