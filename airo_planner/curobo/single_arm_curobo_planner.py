@@ -27,6 +27,7 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
         curobo_world_file: PathLike,
         max_attempts: int = 5,
         max_collider_cuboids: int = 32,
+        use_cuda_graph: bool = False,
     ):
         """Instantiate a single-arm motion planner using cuRobo.
 
@@ -37,16 +38,22 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
             max_collider_cuboids: Size of cuRobo's cuboid collision cache. cuRobo pre-allocates
                 this at construction time, so it must cover both the cuboids already present in
                 `curobo_world_file` and any you plan to add later via `add_collider_cuboid`.
+            use_cuda_graph: Enable cuRobo's CUDA-graph capture for ~5x faster steady-state planning.
+                A captured graph is frozen to the first solver pipeline it sees, so an instance with
+                this enabled must be used for a *single* query type only (e.g. only
+                `plan_to_joint_configuration`). Mixing `plan_cspace` and `plan_pose` (or IK/FK) on the
+                same instance requires this to be False (the default).
         """
         self.curobo_robot_file = curobo_robot_file
         self.curobo_world_file = curobo_world_file
         self.max_attempts = max_attempts
         self.max_collider_cuboids = max_collider_cuboids
+        self.use_cuda_graph = use_cuda_graph
 
         self.motion_planner_config = MotionPlannerCfg.create(
             robot=str(curobo_robot_file),
             scene_model=str(curobo_world_file),
-            use_cuda_graph=False,  # Required to support both plan_cspace and plan_pose on the same instance.
+            use_cuda_graph=use_cuda_graph,
             collision_cache={"cuboid": max_collider_cuboids},
         )
 
@@ -78,7 +85,7 @@ class SingleArmCuroboPlanner(SingleArmPlanner):
             batch_config = MotionPlannerCfg.create(
                 robot=str(self.curobo_robot_file),
                 scene_model=str(self.curobo_world_file),
-                use_cuda_graph=False,
+                use_cuda_graph=self.use_cuda_graph,
                 max_batch_size=batch_size,
                 collision_cache={"cuboid": self.max_collider_cuboids},
             )
