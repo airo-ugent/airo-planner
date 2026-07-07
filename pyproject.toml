@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "airo-planner"
-version = "0.0.8"
+version = "0.0.9"
 authors = [
   { name = "Andreas Verleysen", email = "andreas.verleysen@ugent.be" },
   { name = "Victor-Louis De Gusseme", email = "victorlouisdg@gmail.com" },
@@ -30,11 +30,6 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/airo-ugent/airo-planner"
 Issues = "https://github.com/airo-ugent/airo-planner/issues"
-
-[project.optional-dependencies]
-rerun = [
-    "rerun-sdk>=0.27.2",
-]
 
 [dependency-groups]
 dev = [
