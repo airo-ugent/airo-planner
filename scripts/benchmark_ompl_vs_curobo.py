@@ -8,6 +8,10 @@ and the *same* set of collision-free start/goal joint-configuration pairs:
   with two collision models: ``primitive`` (the default ``ur5e.urdf`` sphere/cylinder geometry)
   and ``convex`` (``ur5e_convex_collisions.urdf``, convex .obj meshes on the arm links) -- reported
   as planners ``ompl_drake_primitive`` and ``ompl_drake_convex``.
+* **OMPL+Drake+TOPPRA** -- same as above but with an additional TOPPRA time-parameterization step
+  applied to the geometric path, reported as ``ompl_drake_primitive_toppra`` and
+  ``ompl_drake_convex_toppra``.  The recorded time is the sum of OMPL planning time and TOPPRA
+  overhead, giving a fairer comparison with cuRobo which already includes time parameterization.
 * **cuRobo** -- :class:`airo_planner.curobo.single_arm_curobo_planner.SingleArmCuroboPlanner`
   (GPU, optimization-based).
 
@@ -278,6 +282,10 @@ def make_drake_collision_checker(scenario: Scenario, urdf_name: str = ROBOT_NAME
     with a 180 deg rotation (``X_URBASE_ROSBASE``); obstacles are placed in that same world frame
     via :func:`drake_obstacle_transform`. Always-colliding self-collision pairs (a
     conservative-collision-model artifact) are filtered, mirroring cuRobo's ignore matrix.
+
+    Returns:
+        A ``(collision_checker, robot_diagram)`` tuple.  The ``robot_diagram`` is exposed so that
+        callers can retrieve its ``plant`` for TOPPRA time parameterization.
     """
     import airo_models
     from airo_drake import finish_build
@@ -318,7 +326,7 @@ def make_drake_collision_checker(scenario: Scenario, urdf_name: str = ROBOT_NAME
     for name_a, name_b, fraction in filtered:
         print(f"    filtered persistent self-collision pair: {name_a} <-> {name_b} ({fraction:.0%} of samples)")
 
-    return collision_checker
+    return collision_checker, robot_diagram
 
 
 def make_ompl_planner(collision_checker, planning_time: float):  # type: ignore[no-untyped-def]
@@ -330,6 +338,35 @@ def make_ompl_planner(collision_checker, planning_time: float):  # type: ignore[
         degrees_of_freedom=DOF,
         allowed_planning_time=planning_time,
     )
+
+
+def make_toppra_plan_fn(ompl_planner, robot_diagram):  # type: ignore[no-untyped-def]
+    """Return a planning function that applies TOPPRA time parameterization after OMPL planning.
+
+    The total elapsed time measured by :func:`run_single` will include both the OMPL planning time
+    and the TOPPRA overhead, making the comparison with cuRobo (which includes its own time
+    parameterization) more apples-to-apples.  On TOPPRA failure the error is re-raised as
+    :class:`~airo_planner.NoPathFoundError` so that :func:`run_single` records it as a failure.
+
+    The geometric path is unchanged by TOPPRA; only the timing differs.  The returned positions
+    array is therefore identical to the OMPL output.
+    """
+    plant = robot_diagram.plant()
+
+    def plan_fn(start: np.ndarray, goal: np.ndarray) -> np.ndarray:
+        from airo_drake import time_parametrize_toppra
+        from airo_drake.exceptions import TimeParameterizationError
+
+        from airo_planner import NoPathFoundError
+
+        path = ompl_planner.plan_to_joint_configuration(start, goal)
+        try:
+            time_parametrize_toppra(plant, path)
+        except TimeParameterizationError as e:
+            raise NoPathFoundError(str(e)) from e
+        return path
+
+    return plan_fn
 
 
 # ----------------------------------------------------------------------------------------------
@@ -533,9 +570,12 @@ def main() -> None:
 
         # Build a Drake collision checker per OMPL collision model (primitive + convex meshes).
         drake_checkers = {}
+        drake_diagrams = {}
         for model_label, urdf_name in DRAKE_COLLISION_MODELS.items():
             print(f"  Building Drake collision checker ({model_label}: {urdf_name}) ...")
-            drake_checkers[model_label] = make_drake_collision_checker(scenario, urdf_name)
+            checker, diagram = make_drake_collision_checker(scenario, urdf_name)
+            drake_checkers[model_label] = checker
+            drake_diagrams[model_label] = diagram
 
         # Sample a single shared problem suite that is valid under BOTH Drake models, so the
         # primitive and convex OMPL runs (and, as far as possible, cuRobo) solve identical problems.
@@ -553,6 +593,15 @@ def main() -> None:
             for i, (start, goal) in enumerate(problems):
                 all_results.append(
                     run_single(planner_name, ompl_planner.plan_to_joint_configuration, start, goal, scenario.name, i)
+                )
+
+            # --- OMPL + Drake + TOPPRA (same geometric path, with time parameterization overhead) ---
+            toppra_planner_name = f"ompl_drake_{model_label}_toppra"
+            print(f"  Planning with {toppra_planner_name} ...")
+            toppra_plan_fn = make_toppra_plan_fn(ompl_planner, drake_diagrams[model_label])
+            for i, (start, goal) in enumerate(problems):
+                all_results.append(
+                    run_single(toppra_planner_name, toppra_plan_fn, start, goal, scenario.name, i)
                 )
 
         # --- cuRobo ---
