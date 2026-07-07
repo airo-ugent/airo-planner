@@ -361,6 +361,9 @@ def make_toppra_plan_fn(ompl_planner, robot_diagram):  # type: ignore[no-untyped
 
         path = ompl_planner.plan_to_joint_configuration(start, goal)
         try:
+            # The trajectory result is intentionally discarded: we only need to measure the
+            # overhead of TOPPRA so that run_single captures planning + parameterization time.
+            # The geometric path is unchanged by TOPPRA, so returning `path` is correct.
             time_parametrize_toppra(plant, path)
         except TimeParameterizationError as e:
             raise NoPathFoundError(str(e)) from e
