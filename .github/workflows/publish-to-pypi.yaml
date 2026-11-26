@@ -68,8 +68,10 @@ jobs:
         name: python-package-distributions
         path: dist/
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v1.2.3
+      uses: sigstore/gh-action-sigstore-python@v3.5.0
       with:
+        # The "Create GitHub Release" and "Upload artifact signatures" steps below handle the release.
+        release-signing-artifacts: false
         inputs: >-
           ./dist/*.tar.gz
           ./dist/*.whl
