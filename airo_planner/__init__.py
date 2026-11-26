@@ -7,6 +7,8 @@
 # We disable isort for the entire __init__.py file, because the order of imports is important here.
 # If a function depends on another function, the dependent function should be imported after the function it depends on.
 # isort: skip_file
+from typing import Any
+
 from airo_planner.path_conversions import stack_joints
 from airo_planner.exceptions import (
     AllGoalConfigurationsRemovedError,
@@ -64,7 +66,7 @@ _OMPL_NAMES = {
 }
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     if name in _OMPL_NAMES:
         import importlib
 
