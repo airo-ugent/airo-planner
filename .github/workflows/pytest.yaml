@@ -17,7 +17,7 @@ jobs:
           cache-environment: true
       - name: Conda list
         shell: bash -l {0}
-        run: conda list
+        run: micromamba list
       - name: pytest
         shell: bash -l {0}
         run: |
