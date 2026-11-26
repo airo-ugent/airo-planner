@@ -44,8 +44,12 @@ If you have mostly static scenes, use OMPL. It’s well tested, fast, and runs o
 ### Installing `airo-planner`
 `airo-planner` is available on PyPI and installable with pip:
 ```
-pip install airo-planner
+pip install airo-planner            # core only: interfaces, utilities (no OMPL, no Drake, no cuRobo)
+pip install "airo-planner[ompl]"    # + OMPL planners
+pip install "airo-planner[drake]"   # + airo-drake (collision checking and scenes, optional)
+pip install "airo-planner[examples]"  # everything the notebooks and benchmark script need (OMPL + Drake)
 ```
+The planners are independent: cuRobo needs neither OMPL nor Drake, and OMPL needs neither cuRobo nor Drake. Importing an OMPL class without OMPL installed raises an `ImportError` that tells you which extra to install.
 
 ### Dependencies
 If you want to use cuRobo with `airo-planner`, you first need to install it yourself; `airo-planner` does not depend on it directly since cuRobo isn't published on PyPI. Note that you will need a CUDA-enabled GPU (newer than Turing, driver ≥580.65.06).

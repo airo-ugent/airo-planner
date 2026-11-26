@@ -20,12 +20,19 @@ classifiers = [
 ]
 
 dependencies = [
-    "airo-drake>=0.0.8",
     "airo-typing>=2025.11.0",
     "loguru>=0.7.3",
-    "ompl>=2.0.0",
-    "yourdfpy>=0.0.58",
+    "numpy",
 ]
+
+[project.optional-dependencies]
+# OMPL planners: SingleArmOmplPlanner, DualArmOmplPlanner, MobilePlatformOmplPlanner.
+ompl = ["ompl>=2.0.0"]
+# Drake collision checking and scene building (used in the notebooks and benchmark, not by the planners).
+drake = ["airo-drake>=0.0.8"]
+# cuRobo is not on PyPI: install it yourself, see the README.
+# Extras needed by the example notebooks and the benchmark script.
+examples = ["airo-planner[ompl,drake]", "airo-models", "yourdfpy>=0.0.58"]
 
 [project.urls]
 Homepage = "https://github.com/airo-ugent/airo-planner"
@@ -36,3 +43,6 @@ dev = [
     "jupyter>=1.1.1",
     "setuptools>=80.9.0",
 ]
+
+[tool.uv.sources]
+airo-models = { git = "https://github.com/airo-ugent/airo-models", branch = "main" }

@@ -34,16 +34,6 @@ from airo_planner.selection.goal_selection import (
 )
 from airo_planner.selection.path_selection import choose_shortest_path
 
-from airo_planner.ompl.utilities import (
-    function_to_ompl,
-    state_to_ompl,
-    path_from_ompl,
-    state_from_ompl,
-    bounds_to_ompl,
-    create_simple_setup,
-    solve_and_smooth_path,
-)
-
 from airo_planner.multiple_goal_planner import (
     MultipleGoalPlanner,
     JointConfigurationsModifierType,
@@ -57,9 +47,39 @@ from airo_planner.function_conversions import (
 
 from airo_planner.interfaces import DualArmPlanner, SingleArmPlanner, MobilePlatformPlanner
 
-from airo_planner.ompl.single_arm_ompl_planner import SingleArmOmplPlanner
-from airo_planner.ompl.dual_arm_ompl_planner import DualArmOmplPlanner
-from airo_planner.ompl.mobile_platform_ompl_planner import MobilePlatformOmplPlanner
+# OMPL is an optional dependency (pip install "airo-planner[ompl]").
+# The OMPL names below are imported lazily (PEP 562), so that `import airo_planner` also works without OMPL,
+# e.g. when you only use cuRobo.
+_OMPL_NAMES = {
+    "function_to_ompl": "airo_planner.ompl.utilities",
+    "state_to_ompl": "airo_planner.ompl.utilities",
+    "path_from_ompl": "airo_planner.ompl.utilities",
+    "state_from_ompl": "airo_planner.ompl.utilities",
+    "bounds_to_ompl": "airo_planner.ompl.utilities",
+    "create_simple_setup": "airo_planner.ompl.utilities",
+    "solve_and_smooth_path": "airo_planner.ompl.utilities",
+    "SingleArmOmplPlanner": "airo_planner.ompl.single_arm_ompl_planner",
+    "DualArmOmplPlanner": "airo_planner.ompl.dual_arm_ompl_planner",
+    "MobilePlatformOmplPlanner": "airo_planner.ompl.mobile_platform_ompl_planner",
+}
+
+
+def __getattr__(name: str):
+    if name in _OMPL_NAMES:
+        import importlib
+
+        try:
+            module = importlib.import_module(_OMPL_NAMES[name])
+        except ImportError as e:
+            raise ImportError(
+                f"'{name}' requires OMPL, which is not installed. Install it with: pip install 'airo-planner[ompl]'"
+            ) from e
+        return getattr(module, name)
+    raise AttributeError(f"module 'airo_planner' has no attribute '{name}'")
+
+
+def __dir__() -> list[str]:
+    return sorted(list(globals()) + list(_OMPL_NAMES))
 
 
 __all__ = [
